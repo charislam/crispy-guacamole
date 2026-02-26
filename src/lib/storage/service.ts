@@ -1,6 +1,8 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import { Context, Data, Effect, Layer } from "effect"
 
+import { SupabaseCredentialsService } from "../credentials/service.js"
+
 type ListBucketsResult = Awaited<ReturnType<SupabaseClient["storage"]["listBuckets"]>>
 export type Bucket = NonNullable<ListBucketsResult["data"]>[number]
 type ListBucketsOptions = Pick<
@@ -33,9 +35,13 @@ const listBuckets = (client: SupabaseClient, options?: ListBucketsOptions) =>
     )
   )
 
-export const SupabaseStorageServiceLive = (url: string, key: string) => {
-  const client = createClient(url, key)
-  return Layer.succeed(SupabaseStorageService, {
-    listBuckets: (options) => listBuckets(client, options)
+export const SupabaseStorageServiceLive = Layer.effect(
+  SupabaseStorageService,
+  Effect.gen(function* () {
+    const { url, key } = yield* SupabaseCredentialsService
+    const client = createClient(url, key)
+    return {
+      listBuckets: (options) => listBuckets(client, options)
+    }
   })
-}
+)

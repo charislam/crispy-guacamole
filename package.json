@@ -2,6 +2,7 @@
   "name": "playground",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "vitest run"
@@ -16,6 +17,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.98.0",
     "effect": "^3.19.19"
   }
 }

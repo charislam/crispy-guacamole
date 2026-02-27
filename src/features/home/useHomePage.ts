@@ -1,0 +1,23 @@
+import { useNavigate } from "@tanstack/react-router"
+import { Effect } from "effect"
+import { useContext } from "react"
+
+import { CredentialsStoreContext } from "@/lib/credentials/credentials-store.js"
+import type { KnownCredentialsState } from "@/lib/credentials/types.js"
+import { useCredentials } from "@/lib/hooks/useCredentials.js"
+import { useBuckets } from "./useBuckets.js"
+
+export function useHomePage() {
+  const store = useContext(CredentialsStoreContext)
+  // beforeLoad in the route guarantees status === "known" here
+  const { credentials } = useCredentials(store) as KnownCredentialsState
+  const bucketsState = useBuckets(credentials)
+  const navigate = useNavigate()
+
+  const onClearCredentials = () => {
+    Effect.runSync(store.clearCredentials())
+    navigate({ to: "/credentials" })
+  }
+
+  return { bucketsState, onClearCredentials }
+}

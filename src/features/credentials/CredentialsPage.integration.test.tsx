@@ -1,11 +1,17 @@
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, it, expect } from "vitest"
+import { beforeEach, describe, it, expect } from "vitest"
 
 import { renderApp } from "@/test/render-app.js"
 import { makeStorageLayerNeverResolves } from "@/test/mock-layers.js"
 
+const STORAGE_KEY = "credentials"
+
 describe("CredentialsPage integration", () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
   it("renders the credentials form", async () => {
     await renderApp({ initialPath: "/credentials" })
     expect(screen.getByText("Connect to Supabase")).toBeInTheDocument()
@@ -34,5 +40,31 @@ describe("CredentialsPage integration", () => {
       initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
     })
     expect(screen.getByText("Connect to Supabase")).toBeInTheDocument()
+  })
+
+  it("persists credentials to localStorage after submitting", async () => {
+    const user = userEvent.setup()
+    await renderApp({
+      initialPath: "/credentials",
+      storageLayer: makeStorageLayerNeverResolves(),
+    })
+
+    await user.type(screen.getByLabelText("Project URL"), "https://test.supabase.co")
+    await user.type(screen.getByLabelText("API Key"), "test-key")
+    await user.click(screen.getByRole("button", { name: "Save credentials" }))
+
+    await waitFor(() => expect(screen.getByText("Storage Buckets")).toBeInTheDocument())
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(
+      JSON.stringify({ url: "https://test.supabase.co", key: "test-key" })
+    )
+  })
+
+  it("loads home page directly when credentials are in localStorage", async () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ url: "https://test.supabase.co", key: "test-key" }))
+    await renderApp({
+      initialPath: "/",
+      storageLayer: makeStorageLayerNeverResolves(),
+    })
+    expect(screen.getByText("Storage Buckets")).toBeInTheDocument()
   })
 })

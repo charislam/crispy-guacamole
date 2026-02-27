@@ -1,9 +1,15 @@
-import { describe, expect, it } from "@effect/vitest"
+import { beforeEach, describe, expect, it } from "@effect/vitest"
 import { Effect } from "effect"
 
 import { makeCredentialsStore } from "./store"
 
+const STORAGE_KEY = "credentials"
+
 describe("makeCredentialsStore", () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
   it.effect("initializes with unknown state", () =>
     Effect.gen(function* () {
       const store = yield* makeCredentialsStore
@@ -81,6 +87,43 @@ describe("makeCredentialsStore", () => {
       yield* Effect.yieldNow()
 
       expect(notified).toBe(true)
+    })
+  )
+
+  it.effect("initializes from localStorage when credentials are stored", () =>
+    Effect.gen(function* () {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ url: "https://stored.supabase.co", key: "stored-key" }))
+      const store = yield* makeCredentialsStore
+      expect(store.getSnapshot()).toEqual({
+        status: "known",
+        credentials: { url: "https://stored.supabase.co", key: "stored-key" },
+      })
+    })
+  )
+
+  it.effect("setCredentials persists to localStorage", () =>
+    Effect.gen(function* () {
+      const store = yield* makeCredentialsStore
+      yield* store.setCredentials("https://example.supabase.co", "secret-key")
+      const stored = localStorage.getItem(STORAGE_KEY)
+      expect(stored).toBe(JSON.stringify({ url: "https://example.supabase.co", key: "secret-key" }))
+    })
+  )
+
+  it.effect("clearCredentials removes from localStorage", () =>
+    Effect.gen(function* () {
+      const store = yield* makeCredentialsStore
+      yield* store.setCredentials("https://example.supabase.co", "secret-key")
+      yield* store.clearCredentials()
+      expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+    })
+  )
+
+  it.effect("initializes with unknown state when localStorage contains invalid JSON", () =>
+    Effect.gen(function* () {
+      localStorage.setItem(STORAGE_KEY, "not-valid-json{{{")
+      const store = yield* makeCredentialsStore
+      expect(store.getSnapshot()).toEqual({ status: "unknown", credentials: null })
     })
   )
 })

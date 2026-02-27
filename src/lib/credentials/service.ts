@@ -1,11 +1,11 @@
-import { Context, Layer } from "effect"
+import { Context, Layer } from "effect";
 
-import type { SupabaseCredentials } from "./types.js"
+import type { SupabaseCredentials } from "./types.js";
 
-export class SupabaseCredentialsService extends Context.Tag("SupabaseCredentialsService")<
-  SupabaseCredentialsService,
-  SupabaseCredentials
->() {}
+export class SupabaseCredentialsService extends Context.Tag(
+	"SupabaseCredentialsService",
+)<SupabaseCredentialsService, SupabaseCredentials>() {}
 
-export const SupabaseCredentialsServiceLive = (credentials: SupabaseCredentials) =>
-  Layer.succeed(SupabaseCredentialsService, credentials)
+export const SupabaseCredentialsServiceLive = (
+	credentials: SupabaseCredentials,
+) => Layer.succeed(SupabaseCredentialsService, credentials);

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react"
 
-import type { CredentialsState } from "../lib/credentials/types.js"
+import type { CredentialsState } from "../credentials/types.js"
 
 type CredentialsStore = {
   subscribe: (cb: () => void) => () => void

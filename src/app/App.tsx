@@ -1,5 +1,12 @@
-function App() {
-	return <p>Hello Vite!</p>;
-}
+import { RouterProvider } from "@tanstack/react-router"
 
-export default App;
+import { credentialsStore, CredentialsStoreContext } from "@/lib/credentials/credentials-store.js"
+import { router } from "./router.js"
+
+export default function App() {
+  return (
+    <CredentialsStoreContext.Provider value={credentialsStore}>
+      <RouterProvider router={router} />
+    </CredentialsStoreContext.Provider>
+  )
+}

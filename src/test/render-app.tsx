@@ -1,13 +1,14 @@
-import { render } from "@testing-library/react"
 import { RouterProvider, createMemoryHistory } from "@tanstack/react-router"
+import { render } from "@testing-library/react"
 import { Effect, type Layer } from "effect"
 
-import { CredentialsStoreContext } from "@/lib/credentials/credentials-store.js"
-import { makeCredentialsStore } from "@/lib/credentials/store.js"
+import { createAppRouter } from "@/app/router.js"
 import { RuntimeContext, type AppRuntimeFactory } from "@/lib/app/runtime-context.js"
 import { makeRuntimeFromLayer } from "@/lib/app/runtime.js"
-import { createAppRouter } from "@/app/router.js"
+import { CredentialsStoreContext } from "@/lib/credentials/credentials-store.js"
+import { makeCredentialsStore } from "@/lib/credentials/store.js"
 import type { SupabaseStorageService } from "@/lib/storage/service.js"
+import { defaultTestStorageLayer } from "@/lib/storage/service.mock-layers.js"
 
 type RenderAppOptions = {
   initialPath?: string
@@ -17,7 +18,7 @@ type RenderAppOptions = {
 
 export async function renderApp({
   initialPath = "/",
-  storageLayer,
+  storageLayer = defaultTestStorageLayer,
   initialCredentials = null,
 }: RenderAppOptions = {}) {
   const credentialsStore = Effect.runSync(makeCredentialsStore)
@@ -25,9 +26,8 @@ export async function renderApp({
     Effect.runSync(credentialsStore.setCredentials(initialCredentials.url, initialCredentials.key))
   }
 
-  const runtimeFactory: AppRuntimeFactory = storageLayer
-    ? (_credentials) => makeRuntimeFromLayer(storageLayer)
-    : (_credentials) => { throw new Error("No storage layer provided to renderApp") }
+  const runtimeFactory: AppRuntimeFactory =
+	(_credentials) => makeRuntimeFromLayer(storageLayer)
 
   const history = createMemoryHistory({ initialEntries: [initialPath] })
   const router = createAppRouter({ context: { credentialsStore }, history })

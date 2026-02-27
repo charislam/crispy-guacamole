@@ -3,6 +3,13 @@ import { vi } from "vitest"
 
 import { StorageRequestError, SupabaseStorageService, type Bucket } from "@/lib/storage/service.js"
 
+export const defaultTestStorageLayer =
+  Layer.succeed(SupabaseStorageService, {
+	listBuckets: () => Effect.succeed([]),
+	createBucket: () => Effect.void,
+	deleteBucket: () => Effect.void,
+  })
+
 export const makeStorageLayerWithBuckets = (buckets: Bucket[]) =>
   Layer.succeed(SupabaseStorageService, {
     listBuckets: () => Effect.succeed(buckets),

@@ -1,14 +1,14 @@
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, it, expect } from "vitest"
+import { describe, expect, it } from "vitest"
 
-import { renderApp } from "@/test/render-app.js"
 import {
-  makeStatefulStorageLayer,
-  makeStorageLayerNeverResolves,
-  makeStorageLayerWithBuckets,
-  makeStorageLayerWithError,
-} from "@/test/mock-layers.js"
+    makeStatefulStorageLayer,
+    makeStorageLayerNeverResolves,
+    makeStorageLayerWithBuckets,
+    makeStorageLayerWithError,
+} from "@/lib/storage/service.mock-layers.js"
+import { renderApp } from "@/test/render-app.js"
 
 describe("HomePage integration", () => {
   it("redirects to /credentials when no credentials are set", async () => {

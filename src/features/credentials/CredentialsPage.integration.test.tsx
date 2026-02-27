@@ -1,9 +1,9 @@
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, it, expect } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 
+import { makeStorageLayerNeverResolves } from "@/lib/storage/service.mock-layers.js"
 import { renderApp } from "@/test/render-app.js"
-import { makeStorageLayerNeverResolves } from "@/test/mock-layers.js"
 
 const STORAGE_KEY = "credentials"
 

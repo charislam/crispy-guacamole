@@ -7,6 +7,7 @@ import type { KnownCredentialsState } from "@/lib/credentials/types.js"
 import { useCredentials } from "@/lib/hooks/useCredentials.js"
 import { useBuckets } from "./useBuckets.js"
 import { useCreateBucket } from "./useCreateBucket.js"
+import { useDeleteBucket } from "./useDeleteBucket.js"
 
 export function useHomePage() {
   const store = useContext(CredentialsStoreContext)
@@ -30,7 +31,12 @@ export function useHomePage() {
     refresh()
   }, [refresh])
 
-  const { submit: submitCreateBucket, status: createBucketStatus } = useCreateBucket(credentials, onCreateSuccess)
+  const onDeleteSuccess = useCallback(() => {
+    refresh()
+  }, [refresh])
 
-  return { bucketsState, onClearCredentials, showCreateForm, onToggleCreateForm, submitCreateBucket, createBucketStatus }
+  const { submit: submitCreateBucket, status: createBucketStatus } = useCreateBucket(credentials, onCreateSuccess)
+  const { submit: submitDeleteBucket, status: deleteBucketStatus } = useDeleteBucket(credentials, onDeleteSuccess)
+
+  return { bucketsState, onClearCredentials, showCreateForm, onToggleCreateForm, submitCreateBucket, createBucketStatus, submitDeleteBucket, deleteBucketStatus }
 }

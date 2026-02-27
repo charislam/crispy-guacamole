@@ -54,6 +54,89 @@ describe("HomePage integration", () => {
     expect(screen.getByText("Loading buckets...")).toBeInTheDocument()
   })
 
+  it("delete button is present for each bucket", async () => {
+    await renderApp({
+      initialPath: "/",
+      storageLayer: makeStorageLayerWithBuckets([
+        {
+          id: "bucket-1",
+          name: "my-bucket",
+          public: false,
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
+          owner: "",
+        },
+      ]),
+      initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
+    })
+    await waitFor(() => expect(screen.getByText("my-bucket")).toBeInTheDocument())
+    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument()
+  })
+
+  it("clicking delete and confirming calls deleteBucket and removes bucket from list", async () => {
+    const user = userEvent.setup()
+    const { layer, deleteBucketSpy } = makeStatefulStorageLayer([
+      {
+        id: "bucket-1",
+        name: "my-bucket",
+        public: false,
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+        owner: "",
+      },
+    ])
+
+    await renderApp({
+      initialPath: "/",
+      storageLayer: layer,
+      initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
+    })
+
+    await waitFor(() => expect(screen.getByText("my-bucket")).toBeInTheDocument())
+
+    // Open the confirmation dialog
+    await user.click(screen.getByRole("button", { name: "Delete" }))
+
+    // Confirm deletion — after dialog opens, the trigger is aria-hidden so only the action button is accessible
+    await user.click(screen.getByRole("button", { name: "Delete" }))
+
+    await waitFor(() => expect(deleteBucketSpy).toHaveBeenCalledOnce())
+    expect(deleteBucketSpy).toHaveBeenCalledWith("bucket-1")
+
+    await waitFor(() => expect(screen.queryByText("my-bucket")).not.toBeInTheDocument())
+  })
+
+  it("clicking delete then cancel does not call deleteBucket", async () => {
+    const user = userEvent.setup()
+    const { layer, deleteBucketSpy } = makeStatefulStorageLayer([
+      {
+        id: "bucket-1",
+        name: "my-bucket",
+        public: false,
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+        owner: "",
+      },
+    ])
+
+    await renderApp({
+      initialPath: "/",
+      storageLayer: layer,
+      initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
+    })
+
+    await waitFor(() => expect(screen.getByText("my-bucket")).toBeInTheDocument())
+
+    // Open the confirmation dialog
+    await user.click(screen.getByRole("button", { name: "Delete" }))
+
+    // Cancel
+    await user.click(screen.getByRole("button", { name: "Cancel" }))
+
+    expect(deleteBucketSpy).not.toHaveBeenCalled()
+    expect(screen.queryByText("my-bucket")).toBeInTheDocument()
+  })
+
   it("creates a bucket, spies on the request, and shows it after refresh", async () => {
     const user = userEvent.setup()
     const { layer, createBucketSpy } = makeStatefulStorageLayer([

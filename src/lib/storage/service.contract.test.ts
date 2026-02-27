@@ -24,15 +24,16 @@ describe("SupabaseStorageService (contract)", () => {
     }).pipe(Effect.provide(liveLayer))
   )
 
-  it.effect("createBucket creates a bucket without error", () =>
+  it.effect("createBucket and deleteBucket round-trip correctly", () =>
     Effect.gen(function* () {
       const storage = yield* SupabaseStorageService
-      // Uses a timestamp suffix for a unique name; clean up the bucket manually after runs
       const name = `contract-test-${Date.now()}`
       yield* storage.createBucket(name)
-      // Verify the bucket is now visible in the listing
-      const buckets = yield* storage.listBuckets()
-      expect(buckets.some(b => b.name === name)).toBe(true)
+      const bucketsAfterCreate = yield* storage.listBuckets()
+      expect(bucketsAfterCreate.some(b => b.name === name)).toBe(true)
+      yield* storage.deleteBucket(name)
+      const bucketsAfterDelete = yield* storage.listBuckets()
+      expect(bucketsAfterDelete.some(b => b.name === name)).toBe(false)
     }).pipe(Effect.provide(liveLayer))
   )
 })

@@ -16,6 +16,7 @@ export function HomePage() {
     onToggleCreateForm,
     submitCreateBucket,
     createBucketStatus,
+    submitDeleteBucket,
   } = useHomePage()
   const [bucketName, setBucketName] = useState("")
 
@@ -69,7 +70,7 @@ export function HomePage() {
         cases={{
           loading: () => <BucketsLoading />,
           error: ({ error }) => <BucketsError error={error} />,
-          ready: ({ data }) => <BucketsList data={data} />,
+          ready: ({ data }) => <BucketsList data={data} onDeleteBucket={submitDeleteBucket} />,
         }}
       />
     </div>

@@ -39,6 +39,9 @@ importers:
         specifier: ^3.5.0
         version: 3.5.0
     devDependencies:
+      '@dotenvx/dotenvx':
+        specifier: ^1.52.0
+        version: 1.52.0
       '@effect/vitest':
         specifier: ^0.27.0
         version: 0.27.0(effect@3.19.19)(vitest@3.2.4)

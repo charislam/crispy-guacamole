@@ -5,10 +5,11 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest",
-    "test:contract": "vitest --config vitest.contract.ts"
+    "test:contract": "dotenvx run --env-file .env.test -- vitest --config vitest.contract.ts"
   },
   "packageManager": "pnpm@9.15.5+sha1.cb1f6372ef64e2ba352f2f46325adead1c99ff8f",
   "devDependencies": {
+    "@dotenvx/dotenvx": "^1.52.0",
     "@effect/vitest": "^0.27.0",
     "@tailwindcss/vite": "^4.2.1",
     "@testing-library/jest-dom": "^6.9.1",

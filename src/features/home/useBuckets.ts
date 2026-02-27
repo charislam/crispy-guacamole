@@ -1,7 +1,7 @@
 import { Effect } from "effect"
 import { useEffect, useState } from "react"
 
-import { makeAppRuntime } from "@/lib/app/runtime.js"
+import { useRuntimeFactory } from "@/lib/app/runtime-context.js"
 import type { SupabaseCredentials } from "@/lib/credentials/types.js"
 import type { Bucket, StorageRequestError } from "@/lib/storage/service.js"
 import { SupabaseStorageService } from "@/lib/storage/service.js"
@@ -13,10 +13,11 @@ export type BucketsState =
 
 export function useBuckets(credentials: SupabaseCredentials) {
   const [state, setState] = useState<BucketsState>({ status: "loading" })
+  const runtimeFactory = useRuntimeFactory()
 
   useEffect(() => {
     setState({ status: "loading" })
-    const runtime = makeAppRuntime(credentials)
+    const runtime = runtimeFactory(credentials)
     let cancelled = false
 
     const program = Effect.gen(function* () {
@@ -37,7 +38,7 @@ export function useBuckets(credentials: SupabaseCredentials) {
       cancelled = true
       void runtime.dispose()
     }
-  }, [credentials])
+  }, [credentials, runtimeFactory])
 
   return state
 }

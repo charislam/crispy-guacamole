@@ -20,8 +20,19 @@ export class SupabaseStorageService extends Context.Tag(
   SupabaseStorageService,
   {
     listBuckets: (options?: ListBucketsOptions) => Effect.Effect<Bucket[], StorageRequestError>
+    createBucket: (name: string) => Effect.Effect<void, StorageRequestError>
   }
 >() {}
+
+const createBucket = (client: SupabaseClient, name: string) =>
+  Effect.tryPromise({
+    try: () => client.storage.createBucket(name),
+    catch: (cause) => new StorageRequestError({ cause })
+  }).pipe(
+    Effect.flatMap(({ error }) =>
+      error !== null ? Effect.fail(new StorageRequestError({ cause: error })) : Effect.void
+    )
+  )
 
 const listBuckets = (client: SupabaseClient, options?: ListBucketsOptions) =>
   Effect.tryPromise({
@@ -41,7 +52,8 @@ export const SupabaseStorageServiceLive = Layer.effect(
     const { url, key } = yield* SupabaseCredentialsService
     const client = createClient(url, key)
     return {
-      listBuckets: (options) => listBuckets(client, options)
+      listBuckets: (options) => listBuckets(client, options),
+      createBucket: (name) => createBucket(client, name),
     }
   })
 )

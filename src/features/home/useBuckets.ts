@@ -1,5 +1,5 @@
 import { Effect } from "effect"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 import { useRuntimeFactory } from "@/lib/app/runtime-context.js"
 import type { SupabaseCredentials } from "@/lib/credentials/types.js"
@@ -12,8 +12,10 @@ export type BucketsState =
   | { status: "error"; error: StorageRequestError }
 
 export function useBuckets(credentials: SupabaseCredentials) {
-  const [state, setState] = useState<BucketsState>({ status: "loading" })
+  const [listState, setState] = useState<BucketsState>({ status: "loading" })
+  const [refreshKey, setRefreshKey] = useState(0)
   const runtimeFactory = useRuntimeFactory()
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
 
   useEffect(() => {
     setState({ status: "loading" })
@@ -38,7 +40,7 @@ export function useBuckets(credentials: SupabaseCredentials) {
       cancelled = true
       void runtime.dispose()
     }
-  }, [credentials, runtimeFactory])
+  }, [credentials, runtimeFactory, refreshKey])
 
-  return state
+  return { state: listState, refresh }
 }

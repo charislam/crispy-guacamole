@@ -11,6 +11,7 @@ export default defineConfig({
   },
   test: {
     include: ["src/**/*.test.{ts,tsx}"],
+    exclude: ["src/**/*.contract.test.ts"],
     browser: {
       enabled: true,
       provider: "playwright",

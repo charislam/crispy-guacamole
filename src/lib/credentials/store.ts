@@ -1,4 +1,4 @@
-import { Effect, Schema } from "effect";
+import { Effect, Redacted, Schema } from "effect";
 
 import { makeStore } from "../resource/store.js";
 import type { CredentialsState, KnownCredentialsState } from "./types.js";
@@ -6,7 +6,7 @@ import type { CredentialsState, KnownCredentialsState } from "./types.js";
 const STORAGE_KEY = "credentials";
 
 const StoredCredentials = Schema.parseJson(
-	Schema.Struct({ url: Schema.String, key: Schema.String }),
+	Schema.Struct({ url: Schema.String, key: Schema.Redacted(Schema.String) }),
 );
 
 export const verifyCredentialsExisting = (
@@ -34,7 +34,7 @@ export const makeCredentialsStore = Effect.gen(function* () {
 		Effect.gen(function* () {
 			yield* store.update(() => ({
 				status: "known",
-				credentials: { url, key },
+				credentials: { url, key: Redacted.make(key) },
 			}));
 			yield* Effect.sync(() =>
 				localStorage.setItem(STORAGE_KEY, JSON.stringify({ url, key })),

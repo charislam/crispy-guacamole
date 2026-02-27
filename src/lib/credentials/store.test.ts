@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "@effect/vitest";
-import { Effect } from "effect";
+import { Effect, Redacted } from "effect";
 
 import { makeCredentialsStore } from "./store";
 
@@ -24,10 +24,12 @@ describe("makeCredentialsStore", () => {
 		Effect.gen(function* () {
 			const store = yield* makeCredentialsStore;
 			yield* store.setCredentials("https://example.supabase.co", "secret-key");
-			expect(store.getSnapshot()).toEqual({
-				status: "known",
-				credentials: { url: "https://example.supabase.co", key: "secret-key" },
-			});
+			const snapshot = store.getSnapshot();
+			expect(snapshot.status).toBe("known");
+			if (snapshot.status === "known") {
+				expect(snapshot.credentials.url).toBe("https://example.supabase.co");
+				expect(Redacted.value(snapshot.credentials.key)).toBe("secret-key");
+			}
 		}),
 	);
 
@@ -39,7 +41,7 @@ describe("makeCredentialsStore", () => {
 			expect(snapshot.status).toBe("known");
 			if (snapshot.status === "known") {
 				expect(snapshot.credentials.url).toBe("https://a.supabase.co");
-				expect(snapshot.credentials.key).toBe("key-a");
+				expect(Redacted.value(snapshot.credentials.key)).toBe("key-a");
 			}
 		}),
 	);
@@ -61,10 +63,12 @@ describe("makeCredentialsStore", () => {
 			const store = yield* makeCredentialsStore;
 			yield* store.setCredentials("https://first.supabase.co", "key-1");
 			yield* store.setCredentials("https://second.supabase.co", "key-2");
-			expect(store.getSnapshot()).toEqual({
-				status: "known",
-				credentials: { url: "https://second.supabase.co", key: "key-2" },
-			});
+			const snapshot = store.getSnapshot();
+			expect(snapshot.status).toBe("known");
+			if (snapshot.status === "known") {
+				expect(snapshot.credentials.url).toBe("https://second.supabase.co");
+				expect(Redacted.value(snapshot.credentials.key)).toBe("key-2");
+			}
 		}),
 	);
 
@@ -110,10 +114,12 @@ describe("makeCredentialsStore", () => {
 				}),
 			);
 			const store = yield* makeCredentialsStore;
-			expect(store.getSnapshot()).toEqual({
-				status: "known",
-				credentials: { url: "https://stored.supabase.co", key: "stored-key" },
-			});
+			const snapshot = store.getSnapshot();
+			expect(snapshot.status).toBe("known");
+			if (snapshot.status === "known") {
+				expect(snapshot.credentials.url).toBe("https://stored.supabase.co");
+				expect(Redacted.value(snapshot.credentials.key)).toBe("stored-key");
+			}
 		}),
 	);
 

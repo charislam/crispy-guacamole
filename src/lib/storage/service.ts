@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { Context, Data, Effect, Layer, Schema } from "effect";
+import { Context, Data, Effect, Layer, Redacted, Schema } from "effect";
 
 import { SupabaseCredentialsService } from "../credentials/service.js";
 
@@ -91,7 +91,7 @@ export const SupabaseStorageServiceLive = Layer.effect(
 	SupabaseStorageService,
 	Effect.gen(function* () {
 		const { url, key } = yield* SupabaseCredentialsService;
-		const client = createClient(url, key);
+		const client = createClient(url, Redacted.value(key));
 		return {
 			listBuckets: (options) => listBuckets(client, options),
 			createBucket: (name) => createBucket(client, name),

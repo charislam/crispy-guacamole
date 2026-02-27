@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Redacted } from "effect";
 
 import {
 	SupabaseCredentialsService,
@@ -10,15 +10,13 @@ describe("SupabaseCredentialsServiceLive", () => {
 	it.effect("provides the given credentials", () =>
 		Effect.gen(function* () {
 			const credentials = yield* SupabaseCredentialsService;
-			expect(credentials).toEqual({
-				url: "https://example.supabase.co",
-				key: "secret-key",
-			});
+			expect(credentials.url).toBe("https://example.supabase.co");
+			expect(Redacted.value(credentials.key)).toBe("secret-key");
 		}).pipe(
 			Effect.provide(
 				SupabaseCredentialsServiceLive({
 					url: "https://example.supabase.co",
-					key: "secret-key",
+					key: Redacted.make("secret-key"),
 				}),
 			),
 		),
@@ -32,7 +30,7 @@ describe("SupabaseCredentialsServiceLive", () => {
 			Effect.provide(
 				SupabaseCredentialsServiceLive({
 					url: "https://my-project.supabase.co",
-					key: "any-key",
+					key: Redacted.make("any-key"),
 				}),
 			),
 		),
@@ -41,12 +39,12 @@ describe("SupabaseCredentialsServiceLive", () => {
 	it.effect("provides the key field", () =>
 		Effect.gen(function* () {
 			const { key } = yield* SupabaseCredentialsService;
-			expect(key).toBe("my-secret-key");
+			expect(Redacted.value(key)).toBe("my-secret-key");
 		}).pipe(
 			Effect.provide(
 				SupabaseCredentialsServiceLive({
 					url: "https://example.supabase.co",
-					key: "my-secret-key",
+					key: Redacted.make("my-secret-key"),
 				}),
 			),
 		),
@@ -58,14 +56,14 @@ describe("SupabaseCredentialsServiceLive", () => {
 				SupabaseCredentialsService,
 				SupabaseCredentialsServiceLive({
 					url: "https://a.supabase.co",
-					key: "key-a",
+					key: Redacted.make("key-a"),
 				}),
 			);
 			const credB = yield* Effect.provide(
 				SupabaseCredentialsService,
 				SupabaseCredentialsServiceLive({
 					url: "https://b.supabase.co",
-					key: "key-b",
+					key: Redacted.make("key-b"),
 				}),
 			);
 			expect(credA.url).toBe("https://a.supabase.co");
@@ -77,16 +75,14 @@ describe("SupabaseCredentialsServiceLive", () => {
 		Effect.gen(function* () {
 			const inner = Layer.succeed(SupabaseCredentialsService, {
 				url: "https://composed.supabase.co",
-				key: "composed-key",
+				key: Redacted.make("composed-key"),
 			});
 			const credentials = yield* Effect.provide(
 				SupabaseCredentialsService,
 				inner,
 			);
-			expect(credentials).toEqual({
-				url: "https://composed.supabase.co",
-				key: "composed-key",
-			});
+			expect(credentials.url).toBe("https://composed.supabase.co");
+			expect(Redacted.value(credentials.key)).toBe("composed-key");
 		}),
 	);
 });

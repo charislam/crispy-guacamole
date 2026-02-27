@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Redacted } from "effect";
 
 import { SupabaseCredentialsServiceLive } from "../credentials/service.js";
 import {
@@ -11,7 +11,7 @@ const liveLayer = SupabaseStorageServiceLive.pipe(
 	Layer.provide(
 		SupabaseCredentialsServiceLive({
 			url: process.env.SUPABASE_URL!,
-			key: process.env.SUPABASE_KEY!,
+			key: Redacted.make(process.env.SUPABASE_KEY!),
 		}),
 	),
 );

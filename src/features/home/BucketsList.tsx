@@ -5,20 +5,9 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table.js"
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog.js"
-import { Button } from "@/components/ui/button.js"
-import type { Bucket } from "@/lib/storage/service.js"
+} from "@/components/ui/table.js";
+import type { Bucket } from "@/lib/storage/service.js";
+import { DeleteBucketButton } from "./DeleteBucketButton";
 
 export function BucketsList({ data, onDeleteBucket }: { data: Bucket[]; onDeleteBucket: (id: string) => void }) {
   if (data.length === 0) {
@@ -44,23 +33,7 @@ export function BucketsList({ data, onDeleteBucket }: { data: Bucket[]; onDelete
             <TableCell>{bucket.public ? "Yes" : "No"}</TableCell>
             <TableCell>{new Date(bucket.created_at).toLocaleDateString()}</TableCell>
             <TableCell>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">Delete</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete bucket?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete &quot;{bucket.name}&quot; and all its files. This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onDeleteBucket(bucket.id)}>Delete</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+			  <DeleteBucketButton bucket={bucket} onDelete={onDeleteBucket} />
             </TableCell>
           </TableRow>
         ))}

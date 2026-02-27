@@ -1,11 +1,10 @@
-import { useState } from "react"
-import { Button } from "@/components/ui/button.js"
-import { Input } from "@/components/ui/input.js"
-import { Label } from "@/components/ui/label.js"
 import { StateSwitch } from "@/components/StateSwitch.js"
+import { Button } from "@/components/ui/button.js"
+import { useRef } from "react"
 import { BucketsError } from "./BucketsError.js"
 import { BucketsList } from "./BucketsList.js"
 import { BucketsLoading } from "./BucketsLoading.js"
+import { CreateBucketForm } from "./CreateBucketForm.js"
 import { useHomePage } from "./useHomePage.js"
 
 export function HomePage() {
@@ -18,15 +17,18 @@ export function HomePage() {
     createBucketStatus,
     submitDeleteBucket,
   } = useHomePage()
-  const [bucketName, setBucketName] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+	const formData = new FormData(e.currentTarget)
+	const bucketName = formData.get("bucket-name") as string
     submitCreateBucket(bucketName)
   }
 
   const handleCancel = () => {
-    setBucketName("")
+	if (inputRef.current) inputRef.current.value = ""
     onToggleCreateForm()
   }
 
@@ -50,20 +52,11 @@ export function HomePage() {
         </div>
       </div>
       {showCreateForm && (
-        <form onSubmit={handleSubmit} className="mb-6 flex gap-2 items-end">
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="bucket-name">Bucket name</Label>
-            <Input
-              id="bucket-name"
-              value={bucketName}
-              onChange={(e) => setBucketName(e.target.value)}
-              placeholder="my-bucket"
-            />
-          </div>
-          <Button type="submit" disabled={createBucketStatus === "pending"}>
-            {createBucketStatus === "pending" ? "Creating..." : "Create"}
-          </Button>
-        </form>
+		<CreateBucketForm
+		  inputRef={inputRef}
+		  handleSubmit={handleSubmit}
+		  status={createBucketStatus}
+		/>
       )}
       <StateSwitch
         state={bucketsState}

@@ -1,5 +1,4 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Effect } from "effect";
 import { useCallback, useContext, useState } from "react";
 
 import { CredentialsStoreContext } from "@/lib/credentials/credentials-store.js";
@@ -17,8 +16,7 @@ export function useHomePage() {
 	const navigate = useNavigate();
 	const [showCreateForm, setShowCreateForm] = useState(false);
 
-	const onClearCredentials = () => {
-		Effect.runSync(store.clearCredentials());
+	const onNavigateCredentials = () => {
 		navigate({ to: "/credentials" });
 	};
 
@@ -42,7 +40,7 @@ export function useHomePage() {
 
 	return {
 		bucketsState,
-		onClearCredentials,
+		onNavigateCredentials,
 		showCreateForm,
 		onToggleCreateForm,
 		submitCreateBucket,

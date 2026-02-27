@@ -10,7 +10,7 @@ import { useHomePage } from "./useHomePage.js";
 export function HomePage() {
 	const {
 		bucketsState,
-		onClearCredentials,
+		onNavigateCredentials,
 		showCreateForm,
 		onToggleCreateForm,
 		submitCreateBucket,
@@ -37,7 +37,7 @@ export function HomePage() {
 			<div className="flex items-center justify-between mb-6">
 				<h1 className="text-2xl font-bold">Storage Buckets</h1>
 				<div className="flex gap-2">
-					<Button variant="outline" size="sm" onClick={onClearCredentials}>
+					<Button variant="outline" size="sm" onClick={onNavigateCredentials}>
 						Change credentials
 					</Button>
 					{showCreateForm ? (

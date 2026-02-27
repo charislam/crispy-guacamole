@@ -78,7 +78,9 @@ describe("HomePage integration", () => {
 		await waitFor(() =>
 			expect(screen.getByText("my-bucket")).toBeInTheDocument(),
 		);
-		expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Delete bucket" }),
+		).toBeInTheDocument();
 	});
 
 	it("clicking delete and confirming calls deleteBucket and removes bucket from list", async () => {
@@ -105,7 +107,7 @@ describe("HomePage integration", () => {
 		);
 
 		// Open the confirmation dialog
-		await user.click(screen.getByRole("button", { name: "Delete" }));
+		await user.click(screen.getByRole("button", { name: "Delete bucket" }));
 
 		// Confirm deletion — after dialog opens, the trigger is aria-hidden so only the action button is accessible
 		await user.click(screen.getByRole("button", { name: "Delete" }));
@@ -142,7 +144,7 @@ describe("HomePage integration", () => {
 		);
 
 		// Open the confirmation dialog
-		await user.click(screen.getByRole("button", { name: "Delete" }));
+		await user.click(screen.getByRole("button", { name: "Delete bucket" }));
 
 		// Cancel
 		await user.click(screen.getByRole("button", { name: "Cancel" }));

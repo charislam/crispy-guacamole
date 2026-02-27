@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import type { Bucket } from "@/lib/storage/service";
+import { Trash } from "lucide-react";
 
 export function DeleteBucketButton({
 	bucket,
@@ -22,8 +23,9 @@ export function DeleteBucketButton({
 	return (
 		<AlertDialog>
 			<AlertDialogTrigger asChild>
-				<Button variant="destructive" size="sm">
-					Delete
+				<Button variant="outline" size="sm">
+					<span className="sr-only">Delete bucket</span>
+					<Trash className="h-4 w-4" />
 				</Button>
 			</AlertDialogTrigger>
 			<AlertDialogContent>

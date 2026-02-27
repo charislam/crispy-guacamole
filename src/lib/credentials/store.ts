@@ -1,13 +1,17 @@
 import { Effect, Schema } from "effect";
 
 import { makeStore } from "../resource/store.js";
-import type { CredentialsState } from "./types.js";
+import type { CredentialsState, KnownCredentialsState } from "./types.js";
 
 const STORAGE_KEY = "credentials";
 
 const StoredCredentials = Schema.parseJson(
 	Schema.Struct({ url: Schema.String, key: Schema.String }),
 );
+
+export const verifyCredentialsExisting = (
+	state: CredentialsState,
+): state is KnownCredentialsState => state.status === "known";
 
 const readInitialState = Effect.gen(function* () {
 	const raw = yield* Effect.sync(() => localStorage.getItem(STORAGE_KEY));

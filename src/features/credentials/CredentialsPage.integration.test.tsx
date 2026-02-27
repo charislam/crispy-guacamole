@@ -49,6 +49,20 @@ describe("CredentialsPage integration", () => {
 		expect(screen.getByText("Connect to Supabase")).toBeInTheDocument();
 	});
 
+	it("shows existing URL as placeholder", async () => {
+		await renderApp({
+			initialPath: "/credentials",
+			initialCredentials: {
+				url: "https://existing.supabase.co",
+				key: "test-key",
+			},
+		});
+		expect(screen.getByLabelText("Project URL")).toHaveAttribute(
+			"placeholder",
+			"https://existing.supabase.co",
+		);
+	});
+
 	it("persists credentials to localStorage after submitting", async () => {
 		const user = userEvent.setup();
 		await renderApp({

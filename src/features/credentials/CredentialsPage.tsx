@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label.js";
 import { useCredentialsForm } from "./useCredentialsForm.js";
 
 export function CredentialsPage() {
-	const { onSubmit } = useCredentialsForm();
+	const { onSubmit, ...credentials } = useCredentialsForm();
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -36,7 +36,11 @@ export function CredentialsPage() {
 								id="url"
 								name="url"
 								type="url"
-								placeholder="https://your-project.supabase.co"
+								placeholder={
+									credentials.hasExisting
+										? credentials.existingUrl
+										: "https://your-project.supabase.co"
+								}
 								required
 							/>
 						</div>

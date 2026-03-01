@@ -1,23 +1,23 @@
-import {
-	Cause,
-	Effect,
-	Exit,
-	Layer,
-	Option,
-	Redacted
-} from "effect";
+import { Cause, Effect, Exit, Layer, Option, Redacted } from "effect";
 import { expect, it } from "vitest";
 
-import { RawRequestService, RequestService, RequestServiceLive } from "./request.ts";
+import {
+	RawRequestService,
+	RequestService,
+	RequestServiceLive,
+} from "./request.ts";
 
 const makeRawRequestService = (req: Request) =>
 	Layer.succeed(RawRequestService, req);
 
-it('should fail when Authorization header is missing', async () => {
+it("should fail when Authorization header is missing", async () => {
 	const req = new Request("http://localhost");
 	const rawRequestLayer = makeRawRequestService(req);
 
-	const requestServiceLayer = Layer.provide(RequestServiceLive, rawRequestLayer);
+	const requestServiceLayer = Layer.provide(
+		RequestServiceLive,
+		rawRequestLayer,
+	);
 	const program = Effect.gen(function* () {
 		const requestService = yield* RequestService;
 		return yield* requestService.getUncheckedAuth();
@@ -29,13 +29,11 @@ it('should fail when Authorization header is missing', async () => {
 	expect(Exit.isFailure(result)).toBe(true);
 	if (Exit.isFailure(result)) {
 		const error = Cause.failureOption(result.cause);
-		expect(
-			Option.isSome(error) && error.value._tag
-		).toBe("UnauthorizedError");
+		expect(Option.isSome(error) && error.value._tag).toBe("UnauthorizedError");
 	}
 });
 
-it('should fail when Authorization header is corrupted', async () => {
+it("should fail when Authorization header is corrupted", async () => {
 	const req = new Request("http://localhost", {
 		headers: {
 			Authorization: "InvalidHeader",
@@ -43,7 +41,10 @@ it('should fail when Authorization header is corrupted', async () => {
 	});
 	const rawRequestLayer = makeRawRequestService(req);
 
-	const requestServiceLayer = Layer.provide(RequestServiceLive, rawRequestLayer);
+	const requestServiceLayer = Layer.provide(
+		RequestServiceLive,
+		rawRequestLayer,
+	);
 	const program = Effect.gen(function* () {
 		const requestService = yield* RequestService;
 		return yield* requestService.getUncheckedAuth();
@@ -55,9 +56,7 @@ it('should fail when Authorization header is corrupted', async () => {
 	expect(Exit.isFailure(result)).toBe(true);
 	if (Exit.isFailure(result)) {
 		const error = Cause.failureOption(result.cause);
-		expect(
-			Option.isSome(error) && error.value._tag
-		).toBe("UnauthorizedError");
+		expect(Option.isSome(error) && error.value._tag).toBe("UnauthorizedError");
 	}
 });
 
@@ -70,7 +69,10 @@ it("should extract auth token from Authorization header", async () => {
 	});
 	const rawRequestLayer = makeRawRequestService(req);
 
-	const requestServiceLayer = Layer.provide(RequestServiceLive, rawRequestLayer);
+	const requestServiceLayer = Layer.provide(
+		RequestServiceLive,
+		rawRequestLayer,
+	);
 	const program = Effect.gen(function* () {
 		const requestService = yield* RequestService;
 		const extractedToken = yield* requestService.getUncheckedAuth();
@@ -96,7 +98,10 @@ it("should fail when request body is empty", async () => {
 	});
 	const rawRequestLayer = makeRawRequestService(req);
 
-	const requestServiceLayer = Layer.provide(RequestServiceLive, rawRequestLayer);
+	const requestServiceLayer = Layer.provide(
+		RequestServiceLive,
+		rawRequestLayer,
+	);
 	const program = Effect.gen(function* () {
 		const requestService = yield* RequestService;
 		return yield* requestService.getJsonBody();
@@ -108,9 +113,9 @@ it("should fail when request body is empty", async () => {
 	expect(Exit.isFailure(result)).toBe(true);
 	if (Exit.isFailure(result)) {
 		const error = Cause.failureOption(result.cause);
-		expect(
-			Option.isSome(error) && error.value.message
-		).toMatch(/Invalid JSON body/);
+		expect(Option.isSome(error) && error.value.message).toMatch(
+			/Invalid JSON body/,
+		);
 	}
 });
 
@@ -124,7 +129,10 @@ it("should fail when request body is invalid JSON", async () => {
 	});
 	const rawRequestLayer = makeRawRequestService(req);
 
-	const requestServiceLayer = Layer.provide(RequestServiceLive, rawRequestLayer);
+	const requestServiceLayer = Layer.provide(
+		RequestServiceLive,
+		rawRequestLayer,
+	);
 	const program = Effect.gen(function* () {
 		const requestService = yield* RequestService;
 		return yield* requestService.getJsonBody();
@@ -136,9 +144,9 @@ it("should fail when request body is invalid JSON", async () => {
 	expect(Exit.isFailure(result)).toBe(true);
 	if (Exit.isFailure(result)) {
 		const error = Cause.failureOption(result.cause);
-		expect(
-			Option.isSome(error) && error.value.message
-		).toMatch(/Invalid JSON body/);
+		expect(Option.isSome(error) && error.value.message).toMatch(
+			/Invalid JSON body/,
+		);
 	}
 });
 
@@ -152,7 +160,10 @@ it("should parse valid JSON body", async () => {
 	});
 	const rawRequestLayer = makeRawRequestService(req);
 
-	const requestServiceLayer = Layer.provide(RequestServiceLive, rawRequestLayer);
+	const requestServiceLayer = Layer.provide(
+		RequestServiceLive,
+		rawRequestLayer,
+	);
 	const program = Effect.gen(function* () {
 		const requestService = yield* RequestService;
 		return yield* requestService.getJsonBody();
@@ -166,6 +177,3 @@ it("should parse valid JSON body", async () => {
 		expect(result.value).toEqual({ valid: true });
 	}
 });
-
-
-

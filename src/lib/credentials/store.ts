@@ -3,6 +3,13 @@ import { Effect, Redacted, Schema } from "effect";
 import { makeStore } from "../resource/store.js";
 import type { CredentialsState, KnownCredentialsState } from "./types.js";
 
+export type CredentialsStore = {
+	getSnapshot: () => CredentialsState;
+	subscribe: (cb: () => void) => () => void;
+	setCredentials: (url: string, key: string) => Effect.Effect<void>;
+	clearCredentials: () => Effect.Effect<void>;
+};
+
 const STORAGE_KEY = "credentials";
 
 const StoredCredentials = Schema.parseJson(

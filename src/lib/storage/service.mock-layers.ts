@@ -1,4 +1,4 @@
-import { Effect, Layer } from "effect";
+import { Data, Effect, Layer } from "effect";
 import { vi } from "vitest";
 
 import {
@@ -42,14 +42,14 @@ export const makeStatefulStorageLayer = (initialBuckets: Bucket[]) => {
 	): Effect.Effect<void, StorageRequestError> => {
 		state.buckets = [
 			...state.buckets,
-			{
+			Data.struct({
 				id: name,
 				name,
 				public: false,
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString(),
 				owner: "",
-			},
+			}),
 		];
 		return Effect.void;
 	};

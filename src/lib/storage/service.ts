@@ -8,18 +8,20 @@ type ListBucketsOptions = Pick<
 	"limit" | "offset"
 >;
 
-export const BucketSchema = Schema.Struct({
-	id: Schema.String,
-	name: Schema.String,
-	owner: Schema.String,
-	created_at: Schema.String,
-	updated_at: Schema.String,
-	public: Schema.Boolean,
-	file_size_limit: Schema.optional(Schema.NullOr(Schema.Number)),
-	allowed_mime_types: Schema.optional(
-		Schema.NullOr(Schema.Array(Schema.String)),
-	),
-});
+export const BucketSchema = Schema.Data(
+	Schema.Struct({
+		id: Schema.String,
+		name: Schema.String,
+		owner: Schema.String,
+		created_at: Schema.String,
+		updated_at: Schema.String,
+		public: Schema.Boolean,
+		file_size_limit: Schema.optional(Schema.NullOr(Schema.Number)),
+		allowed_mime_types: Schema.optional(
+			Schema.NullOr(Schema.Array(Schema.String)),
+		),
+	}),
+);
 
 export type Bucket = Schema.Schema.Type<typeof BucketSchema>;
 

@@ -1,4 +1,4 @@
-import { Effect, type Layer } from "effect";
+import { Effect, Fiber, type Layer } from "effect";
 
 import { mountApp } from "@/app/main.js";
 import { makeRuntimeFromLayer } from "@/lib/app/runtime.js";
@@ -12,6 +12,8 @@ type RenderAppOptions = {
 	storageLayer?: Layer.Layer<SupabaseStorageService>;
 	initialCredentials?: { url: string; key: string } | null;
 };
+
+let lastFiber: Fiber.RuntimeFiber<void, never> | null = null;
 
 export async function renderApp({
 	initialPath = "/",
@@ -35,13 +37,19 @@ export async function renderApp({
 	document.body.appendChild(container);
 
 	const history = makeMemoryHistory(initialPath);
-	const cleanup = mountApp(container, { credentialsStore, runtimeFactory, history });
 
-	return {
-		container,
-		cleanup: () => {
-			cleanup();
-			container.remove();
-		},
-	};
+	lastFiber = Effect.runFork(
+		Effect.scoped(
+			mountApp(container, { credentialsStore, runtimeFactory, history }),
+		),
+	);
+
+	return { container };
+}
+
+export async function cleanupLastApp(): Promise<void> {
+	if (lastFiber) {
+		await Effect.runPromise(Fiber.interrupt(lastFiber));
+		lastFiber = null;
+	}
 }

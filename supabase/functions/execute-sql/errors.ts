@@ -16,6 +16,8 @@ export class InternalServerError extends Data.TaggedError(
 	"InternalServerError",
 )<{ cause?: unknown }> {}
 
-export class SupabaseClientError extends Data.TaggedError("SupabaseClientError")<{
+export class SupabaseClientError extends Data.TaggedError(
+	"SupabaseClientError",
+)<{
 	cause: unknown;
 }> {}

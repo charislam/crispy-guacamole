@@ -3,10 +3,7 @@ import { Effect, Layer } from "effect";
 import { ConfigLayer } from "./config.ts";
 import { DatabaseServiceLive } from "./database.ts";
 import { handlerWithErrorHandling } from "./handler.ts";
-import {
-	RawRequestService,
-	RequestServiceLive,
-} from "./request.ts";
+import { RawRequestService, RequestServiceLive } from "./request.ts";
 import { SupabaseClientLive } from "./supabase.ts";
 
 Deno.serve((req) => {
@@ -21,7 +18,5 @@ Deno.serve((req) => {
 		RequestLayer,
 	);
 
-	return Effect.runPromise(
-		Effect.provide(handlerWithErrorHandling, AppLayer),
-	);
+	return Effect.runPromise(Effect.provide(handlerWithErrorHandling, AppLayer));
 });

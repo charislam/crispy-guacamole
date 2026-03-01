@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button.js";
 import { el } from "@/lib/dom.js";
 import type { Bucket } from "@/lib/storage/service.js";
 
@@ -6,30 +7,40 @@ export function mountDeleteBucketButton(
 	bucket: Bucket,
 	onDelete: (id: string) => void,
 ): () => void {
-	const btn = el("button", {
-		class: "h-8 px-3 rounded-md border text-sm",
-	});
-	btn.textContent = "Delete bucket";
+	const btn = el(
+		"button",
+		{ class: "h-8 px-3 rounded-md border text-sm" },
+		"Delete bucket",
+	);
 	container.appendChild(btn);
 
-	const handleClick = () => showConfirmDialog(bucket, onDelete);
-	btn.addEventListener("click", handleClick);
+	let activeDialog: HTMLDialogElement | null = null;
+
+	const handleClick = () => {
+		activeDialog = showConfirmDialog(bucket, onDelete);
+		activeDialog.addEventListener("close", () => {
+			activeDialog = null;
+		});
+	};
+	let controller = new AbortController();
+	btn.addEventListener("click", handleClick, { signal: controller.signal });
 
 	return () => {
-		btn.removeEventListener("click", handleClick);
+		controller.abort();
+		activeDialog?.close();
 		btn.remove();
 	};
 }
 
-function showConfirmDialog(bucket: Bucket, onDelete: (id: string) => void) {
+function showConfirmDialog(
+	bucket: Bucket,
+	onDelete: (id: string) => void,
+): HTMLDialogElement {
 	const dialog = document.createElement("dialog");
 	dialog.className = "rounded-lg p-6 shadow-xl max-w-md w-full m-auto";
 
-	const title = el("h2", { class: "text-lg font-semibold mb-2" }, "Delete bucket?");
-
 	const desc = document.createElement("p");
 	desc.className = "text-sm text-muted-foreground mb-4";
-	// Safe: bucket.name set via text nodes, never innerHTML
 	desc.append(
 		document.createTextNode('This will permanently delete "'),
 		document.createTextNode(bucket.name),
@@ -38,15 +49,8 @@ function showConfirmDialog(bucket: Bucket, onDelete: (id: string) => void) {
 		),
 	);
 
-	const footer = el("div", { class: "flex justify-end gap-2 mt-4" });
-
-	const cancelBtn = el("button", {
-		class: "h-9 px-4 rounded-md border text-sm",
-	}, "Cancel");
-
-	const deleteBtn = el("button", {
-		class: "h-9 px-4 rounded-md bg-destructive text-destructive-foreground text-sm",
-	}, "Delete");
+	const cancelBtn = Button("Cancel", { variant: "outline" });
+	const deleteBtn = Button("Delete", { variant: "destructive" });
 
 	cancelBtn.addEventListener("click", () => {
 		dialog.close();
@@ -59,10 +63,15 @@ function showConfirmDialog(bucket: Bucket, onDelete: (id: string) => void) {
 		dialog.remove();
 	});
 
-	footer.append(cancelBtn, deleteBtn);
-	dialog.append(title, desc, footer);
+	dialog.append(
+		el("h2", { class: "text-lg font-semibold mb-2" }, "Delete bucket?"),
+		desc,
+		el("div", { class: "flex justify-end gap-2 mt-4" }, cancelBtn, deleteBtn),
+	);
 	document.body.appendChild(dialog);
 	dialog.showModal();
 
 	dialog.addEventListener("close", () => dialog.remove());
+
+	return dialog;
 }

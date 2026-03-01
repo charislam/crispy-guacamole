@@ -1,5 +1,6 @@
 import { screen, waitFor } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
+import { Data } from "effect";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -86,14 +87,14 @@ describe("HomePage integration", () => {
 	it("clicking delete and confirming calls deleteBucket and removes bucket from list", async () => {
 		const user = userEvent.setup();
 		const { layer, deleteBucketSpy } = makeStatefulStorageLayer([
-			{
+			Data.struct({
 				id: "bucket-1",
 				name: "my-bucket",
 				public: false,
 				created_at: "2024-01-01T00:00:00Z",
 				updated_at: "2024-01-01T00:00:00Z",
 				owner: "",
-			},
+			}),
 		]);
 
 		await renderApp({
@@ -123,14 +124,14 @@ describe("HomePage integration", () => {
 	it("clicking delete then cancel does not call deleteBucket", async () => {
 		const user = userEvent.setup();
 		const { layer, deleteBucketSpy } = makeStatefulStorageLayer([
-			{
+			Data.struct({
 				id: "bucket-1",
 				name: "my-bucket",
 				public: false,
 				created_at: "2024-01-01T00:00:00Z",
 				updated_at: "2024-01-01T00:00:00Z",
 				owner: "",
-			},
+			}),
 		]);
 
 		await renderApp({
@@ -156,14 +157,14 @@ describe("HomePage integration", () => {
 	it("creates a bucket, spies on the request, and shows it after refresh", async () => {
 		const user = userEvent.setup();
 		const { layer, createBucketSpy } = makeStatefulStorageLayer([
-			{
+			Data.struct({
 				id: "existing",
 				name: "existing-bucket",
 				public: false,
 				created_at: "2024-01-01T00:00:00Z",
 				updated_at: "2024-01-01T00:00:00Z",
 				owner: "",
-			},
+			}),
 		]);
 
 		await renderApp({

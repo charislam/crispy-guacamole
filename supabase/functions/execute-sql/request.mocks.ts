@@ -8,8 +8,8 @@ const seedAuthToken = (token: string) => () =>
 	Effect.succeed(Redacted.make(token));
 
 const createEmptyBody = () => Effect.succeed({});
-const createInvalidJsonBody = () => Effect.succeed({ "invalid": true });
-const createValidJsonBody = (query = 'test query') => Effect.succeed({ query });
+const createInvalidJsonBody = () => Effect.succeed({ invalid: true });
+const createValidJsonBody = (query = "test query") => Effect.succeed({ query });
 
 export const requestServiceFactory = (
 	overrides: Partial<Context.Tag.Service<RequestService>>,

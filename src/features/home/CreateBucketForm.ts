@@ -1,54 +1,48 @@
-import { effect } from "@preact/signals-core";
-import type { Signal } from "@preact/signals-core";
+import { Effect, Scope, Stream, SubscriptionRef } from "effect";
 
-import { el } from "@/lib/dom.js";
+import { buildCreateBucketFormView } from "./CreateBucketFormView.js";
 import type { CreateBucketStatus } from "./homeState.js";
 
 export function mountCreateBucketForm(
 	container: Element,
-	onSubmit: (name: string) => void,
-	status: Signal<CreateBucketStatus>,
-): () => void {
-	const form = el("form", { class: "mb-6 flex gap-2 items-end" });
+	onSubmit: (name: string) => Effect.Effect<void>,
+	statusRef: SubscriptionRef.SubscriptionRef<CreateBucketStatus>,
+): Effect.Effect<void, never, Scope.Scope> {
+	return Effect.gen(function* () {
+		const controller = new AbortController();
 
-	const fieldDiv = el("div", { class: "flex flex-col gap-1" });
+		const { form, submitBtn } = yield* Effect.acquireRelease(
+			Effect.sync(() => {
+				const view = buildCreateBucketFormView();
+				container.appendChild(view.form);
+				return view;
+			}),
+			({ form }) =>
+				Effect.sync(() => {
+					controller.abort();
+					form.remove();
+				}),
+		);
 
-	const label = el("label", { for: "bucket-name", class: "text-sm font-medium" });
-	label.textContent = "Bucket name";
+		const handleSubmit = (e: Event) => {
+			e.preventDefault();
+			const name = new FormData(form).get("bucket-name") as string;
+			Effect.runFork(onSubmit(name));
+		};
+		form.addEventListener("submit", handleSubmit, {
+			signal: controller.signal,
+		});
 
-	const input = document.createElement("input");
-	input.id = "bucket-name";
-	input.name = "bucket-name";
-	input.placeholder = "my-bucket";
-	input.className =
-		"flex h-9 rounded-md border px-3 py-1 text-sm focus-visible:outline-none";
+		yield* statusRef.changes.pipe(
+			Stream.runForEach((s) =>
+				Effect.sync(() => {
+					submitBtn.disabled = s === "pending";
+					submitBtn.textContent = s === "pending" ? "Creating..." : "Create";
+				}),
+			),
+			Effect.forkScoped,
+		);
 
-	fieldDiv.append(label, input);
-
-	const submitBtn = document.createElement("button");
-	submitBtn.type = "submit";
-	submitBtn.className =
-		"inline-flex h-9 items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground";
-
-	form.append(fieldDiv, submitBtn);
-	container.appendChild(form);
-
-	const stopEffect = effect(() => {
-		const s = status.value;
-		submitBtn.disabled = s === "pending";
-		submitBtn.textContent = s === "pending" ? "Creating..." : "Create";
+		yield* Effect.never;
 	});
-
-	const handleSubmit = (e: Event) => {
-		e.preventDefault();
-		const name = new FormData(form).get("bucket-name") as string;
-		onSubmit(name);
-	};
-	form.addEventListener("submit", handleSubmit);
-
-	return () => {
-		stopEffect();
-		form.removeEventListener("submit", handleSubmit);
-		form.remove();
-	};
 }

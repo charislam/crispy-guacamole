@@ -14,4 +14,3 @@ export const validateDto = (body: Json) =>
 		Effect.map(({ query }) => query),
 		Effect.mapError((err) => new InvalidRequestError({ message: err.message })),
 	);
-

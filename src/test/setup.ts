@@ -1,6 +1,13 @@
 import "@testing-library/jest-dom/vitest";
-import { afterEach } from "vitest";
+import { afterEach, beforeEach } from "vitest";
 
-afterEach(() => {
+import { cleanupLastApp } from "./render-app.js";
+
+beforeEach(() => {
+	localStorage.clear();
+});
+
+afterEach(async () => {
+	await cleanupLastApp();
 	document.body.innerHTML = "";
 });

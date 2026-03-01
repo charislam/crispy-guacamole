@@ -1,13 +1,8 @@
-import type { AppRuntimeFactory } from "@/lib/app/runtime-context.js";
-import type { CredentialsState } from "@/lib/credentials/types.js";
-import type { Effect } from "effect";
+import { Effect, Fiber, Queue, Scope } from "effect";
 
-export type CredentialsStore = {
-	getSnapshot: () => CredentialsState;
-	subscribe: (cb: () => void) => () => void;
-	setCredentials: (url: string, key: string) => Effect.Effect<void>;
-	clearCredentials: () => Effect.Effect<void>;
-};
+import type { AppRuntimeFactory } from "@/lib/app/runtime.js";
+import type { CredentialsStore } from "@/lib/credentials/store.js";
+import { Navigation, type NavigationService } from "./navigation.js";
 
 export type RouteContext = {
 	credentialsStore: CredentialsStore;
@@ -16,8 +11,11 @@ export type RouteContext = {
 
 export type Route = {
 	path: string;
-	beforeLoad?: (ctx: RouteContext) => string | null;
-	mount: (container: Element, ctx: RouteContext) => () => void;
+	redirect?: (ctx: RouteContext) => string | null;
+	mount: (
+		container: Element,
+		ctx: RouteContext,
+	) => Effect.Effect<void, never, Scope.Scope | NavigationService>;
 };
 
 export type HistoryLike = {
@@ -50,9 +48,23 @@ export function makeMemoryHistory(initialPath: string): HistoryLike {
 	};
 }
 
-let _navigate: (path: string) => void = () => {};
-
-export const navigate = (path: string) => _navigate(path);
+function subscribePopState(
+	history: HistoryLike,
+	queue: Queue.Queue<string>,
+): Effect.Effect<void, never, Scope.Scope> {
+	return Effect.acquireRelease(
+		Effect.sync(() => {
+			const controller = new AbortController();
+			window.addEventListener(
+				"popstate",
+				() => Effect.runFork(Queue.offer(queue, history.pathname)),
+				{ signal: controller.signal },
+			);
+			return controller;
+		}),
+		(controller) => Effect.sync(() => controller.abort()),
+	).pipe(Effect.asVoid);
+}
 
 export function mountRouter({
 	container,
@@ -64,40 +76,54 @@ export function mountRouter({
 	routes: Route[];
 	ctx: RouteContext;
 	history: HistoryLike;
-}): () => void {
-	let currentCleanup: (() => void) | null = null;
+}): Effect.Effect<void, never, Scope.Scope> {
+	return Effect.gen(function* () {
+		let currentFiber: Fiber.RuntimeFiber<void, never> | null = null;
+		const navQueue = yield* Queue.unbounded<string>();
 
-	function renderPath(path: string) {
-		const route = routes.find((r) => r.path === path);
-		if (!route) return;
+		const renderPath = (path: string): Effect.Effect<void> =>
+			Effect.gen(function* () {
+				const route = routes.find((r) => r.path === path);
+				if (!route) return;
 
-		const redirect = route.beforeLoad?.(ctx) ?? null;
-		if (redirect !== null) {
-			history.replaceState(null, "", redirect);
-			renderPath(redirect);
-			return;
-		}
+				const redirect = route.redirect?.(ctx) ?? null;
+				if (redirect !== null) {
+					history.replaceState(null, "", redirect);
+					yield* renderPath(redirect);
+					return;
+				}
 
-		currentCleanup?.();
-		currentCleanup = null;
-		container.innerHTML = "";
-		currentCleanup = route.mount(container, ctx);
-	}
+				if (currentFiber) {
+					yield* Fiber.interrupt(currentFiber);
+					currentFiber = null;
+				}
+				container.innerHTML = "";
 
-	_navigate = (path: string) => {
-		history.pushState(null, "", path);
-		renderPath(path);
-	};
+				const nav: NavigationService = {
+					navigate: (p) =>
+						Effect.gen(function* () {
+							history.pushState(null, "", p);
+							yield* Queue.offer(navQueue, p);
+						}),
+				};
 
-	const onPopState = () => renderPath(history.pathname);
-	window.addEventListener("popstate", onPopState);
+				const pageEffect = route
+					.mount(container, ctx)
+					.pipe(Effect.provideService(Navigation, nav), Effect.scoped);
 
-	renderPath(history.pathname);
+				currentFiber = Effect.runFork(pageEffect);
+			});
 
-	return () => {
-		window.removeEventListener("popstate", onPopState);
-		currentCleanup?.();
-		currentCleanup = null;
-		_navigate = () => {};
-	};
+		yield* Effect.addFinalizer(() =>
+			currentFiber ? Fiber.interrupt(currentFiber) : Effect.void,
+		);
+
+		yield* subscribePopState(history, navQueue);
+
+		yield* Queue.offer(navQueue, history.pathname);
+		yield* Queue.take(navQueue).pipe(
+			Effect.flatMap(renderPath),
+			Effect.forever,
+		);
+	});
 }

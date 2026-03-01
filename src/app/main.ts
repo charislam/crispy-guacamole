@@ -1,9 +1,9 @@
-import { Effect } from "effect";
+import { Effect, Scope } from "effect";
 
-import { makeCredentialsStore } from "@/lib/credentials/store.js";
-import { makeAppRuntime } from "@/lib/app/runtime-context.js";
 import { credentialsRoute } from "@/features/credentials/CredentialsPage.js";
 import { homeRoute } from "@/features/home/HomePage.js";
+import { makeAppRuntime } from "@/lib/app/runtime.js";
+import { makeCredentialsStore } from "@/lib/credentials/store.js";
 import {
 	browserHistory,
 	mountRouter,
@@ -20,7 +20,7 @@ export function mountApp(
 		runtimeFactory: RouteContext["runtimeFactory"];
 		history?: HistoryLike;
 	},
-): () => void {
+): Effect.Effect<void, never, Scope.Scope> {
 	const { credentialsStore, runtimeFactory, history = browserHistory } = opts;
 	const ctx: RouteContext = { credentialsStore, runtimeFactory };
 	const routes = [homeRoute, credentialsRoute];
@@ -30,9 +30,15 @@ export function mountApp(
 // Browser bootstrap — only runs when the #root element exists (not in tests)
 const rootEl = document.getElementById("root");
 if (rootEl) {
-	const credentialsStore = Effect.runSync(makeCredentialsStore);
-	mountApp(rootEl, {
-		credentialsStore,
-		runtimeFactory: makeAppRuntime,
-	});
+	Effect.runFork(
+		Effect.scoped(
+			Effect.gen(function* () {
+				const credentialsStore = yield* makeCredentialsStore;
+				yield* mountApp(rootEl, {
+					credentialsStore,
+					runtimeFactory: makeAppRuntime,
+				});
+			}),
+		),
+	);
 }

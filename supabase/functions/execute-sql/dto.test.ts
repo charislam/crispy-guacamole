@@ -11,9 +11,9 @@ it("should fail on invalid DTO", async () => {
 	expect(Exit.isFailure(result)).toBe(true);
 	if (Exit.isFailure(result)) {
 		const causeOpt = Cause.failureOption(result.cause);
-		expect(
-			Option.isSome(causeOpt) && causeOpt.value._tag
-		).toBe("InvalidRequestError");
+		expect(Option.isSome(causeOpt) && causeOpt.value._tag).toBe(
+			"InvalidRequestError",
+		);
 	}
 });
 
@@ -25,9 +25,9 @@ it("should fail on empty string", async () => {
 	expect(Exit.isFailure(result)).toBe(true);
 	if (Exit.isFailure(result)) {
 		const causeOpt = Cause.failureOption(result.cause);
-		expect(
-			Option.isSome(causeOpt) && causeOpt.value._tag
-		).toBe("InvalidRequestError");
+		expect(Option.isSome(causeOpt) && causeOpt.value._tag).toBe(
+			"InvalidRequestError",
+		);
 	}
 });
 
@@ -39,9 +39,9 @@ it("should fail on whitespace-only string", async () => {
 	expect(Exit.isFailure(result)).toBe(true);
 	if (Exit.isFailure(result)) {
 		const causeOpt = Cause.failureOption(result.cause);
-		expect(
-			Option.isSome(causeOpt) && causeOpt.value._tag
-		).toBe("InvalidRequestError");
+		expect(Option.isSome(causeOpt) && causeOpt.value._tag).toBe(
+			"InvalidRequestError",
+		);
 	}
 });
 

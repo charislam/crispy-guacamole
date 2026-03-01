@@ -9,9 +9,7 @@ import {
 	SupabaseClientError,
 	UnauthorizedError,
 } from "./errors.ts";
-import {
-	RequestService,
-} from "./request.ts";
+import { RequestService } from "./request.ts";
 import { SupabaseClientService } from "./supabase.ts";
 
 const checkAuth = Effect.gen(function* () {
@@ -19,7 +17,9 @@ const checkAuth = Effect.gen(function* () {
 	return yield* supabase.adminListUsers().pipe(
 		Effect.matchEffect({
 			onSuccess: () => Effect.succeed(undefined),
-			onFailure: (error): Effect.Effect<never, InternalServerError | UnauthorizedError> => {
+			onFailure: (
+				error,
+			): Effect.Effect<never, InternalServerError | UnauthorizedError> => {
 				if (error instanceof SupabaseClientError) {
 					return Effect.fail(new InternalServerError({ cause: error }));
 				}
@@ -58,7 +58,9 @@ export const handlerWithErrorHandling = handler.pipe(
 	Effect.map((rows) => jsonResponse(rows, 200)),
 	Effect.tapErrorCause((cause) => {
 		const failures = Cause.failures(cause);
-		const messages = Chunk.map(failures, (error) => error._tag).pipe(Chunk.join(", "));
+		const messages = Chunk.map(failures, (error) => error._tag).pipe(
+			Chunk.join(", "),
+		);
 		const causes = Chunk.filter(failures, (e) => "cause" in e).pipe(
 			Chunk.map((e) => (e as { cause: unknown }).cause),
 			Chunk.toArray,
@@ -81,4 +83,3 @@ export const handlerWithErrorHandling = handler.pipe(
 		Effect.succeed(jsonResponse({ error: "Internal server error" }, 500)),
 	),
 );
-

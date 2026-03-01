@@ -1,18 +1,18 @@
-import { Effect } from "effect";
-import type { Signal } from "@preact/signals-core";
+import { Effect, SubscriptionRef } from "effect";
 
-import type { AppRuntimeFactory } from "@/lib/app/runtime-context.js";
+import type { AppRuntimeFactory } from "@/lib/app/runtime.js";
 import type { SupabaseCredentials } from "@/lib/credentials/types.js";
 import {
 	SupabaseStorageService,
 	type Bucket,
 	type StorageRequestError,
+	type StorageSchemaError,
 } from "@/lib/storage/service.js";
 
 export type BucketsState =
 	| { status: "loading" }
 	| { status: "ready"; data: Bucket[] }
-	| { status: "error"; error: StorageRequestError };
+	| { status: "error"; error: StorageRequestError | StorageSchemaError };
 
 export type CreateBucketStatus = "idle" | "pending" | "success" | "error";
 export type DeleteBucketStatus = "idle" | "pending" | "success" | "error";
@@ -20,56 +20,71 @@ export type DeleteBucketStatus = "idle" | "pending" | "success" | "error";
 export function loadBuckets(
 	credentials: SupabaseCredentials,
 	runtimeFactory: AppRuntimeFactory,
-	bucketsState: Signal<BucketsState>,
-): () => void {
-	bucketsState.value = { status: "loading" };
-	const runtime = runtimeFactory(credentials);
-	let cancelled = false;
+	bucketsStateRef: SubscriptionRef.SubscriptionRef<BucketsState>,
+): Effect.Effect<void> {
+	return Effect.gen(function* () {
+		yield* SubscriptionRef.set(bucketsStateRef, { status: "loading" });
 
-	const program = Effect.gen(function* () {
-		const storage = yield* SupabaseStorageService;
-		return yield* storage.listBuckets();
-	}).pipe(
-		Effect.match({
-			onSuccess: (data): BucketsState => ({ status: "ready", data }),
-			onFailure: (error): BucketsState => ({ status: "error", error }),
-		}),
-	);
+		const program = Effect.gen(function* () {
+			const storage = yield* SupabaseStorageService;
+			return yield* storage.listBuckets();
+		}).pipe(
+			Effect.match({
+				onSuccess: (data): BucketsState => ({ status: "ready", data }),
+				onFailure: (error): BucketsState => ({ status: "error", error }),
+			}),
+		);
 
-	runtime.runPromise(program).then((state) => {
-		if (!cancelled) bucketsState.value = state;
+		const result = yield* Effect.acquireUseRelease(
+			Effect.sync(() => runtimeFactory(credentials)),
+			(storageRuntime) =>
+				Effect.async<BucketsState, never>((resume, signal) => {
+					storageRuntime
+						.runPromise(program, { signal })
+						.then((r) => resume(Effect.succeed(r)))
+						.catch(() => {});
+				}),
+			(storageRuntime) => Effect.promise(() => storageRuntime.dispose()),
+		);
+
+		yield* SubscriptionRef.set(bucketsStateRef, result);
 	});
-
-	return () => {
-		cancelled = true;
-		void runtime.dispose();
-	};
 }
 
 export function createBucket(
 	name: string,
 	credentials: SupabaseCredentials,
 	runtimeFactory: AppRuntimeFactory,
-	status: Signal<CreateBucketStatus>,
-	onSuccess: () => void,
-): void {
-	status.value = "pending";
-	const runtime = runtimeFactory(credentials);
+	statusRef: SubscriptionRef.SubscriptionRef<CreateBucketStatus>,
+): Effect.Effect<CreateBucketStatus> {
+	return Effect.gen(function* () {
+		yield* SubscriptionRef.set(statusRef, "pending");
 
-	const program = Effect.gen(function* () {
-		const storage = yield* SupabaseStorageService;
-		yield* storage.createBucket(name);
-	}).pipe(
-		Effect.match({
-			onSuccess: () => "success" as const,
-			onFailure: () => "error" as const,
-		}),
-	);
+		const program = Effect.gen(function* () {
+			const storage = yield* SupabaseStorageService;
+			yield* storage.createBucket(name);
+		}).pipe(
+			Effect.match({
+				onSuccess: () => "success" as const,
+				onFailure: () => "error" as const,
+			}),
+		);
 
-	runtime.runPromise(program).then((nextStatus) => {
-		status.value = nextStatus;
-		void runtime.dispose();
-		if (nextStatus === "success") onSuccess();
+		const nextStatus = yield* Effect.acquireUseRelease(
+			Effect.sync(() => runtimeFactory(credentials)),
+			(storageRuntime) =>
+				Effect.async<CreateBucketStatus, never>((resume, signal) => {
+					storageRuntime
+						.runPromise(program, { signal })
+						.then((r) => resume(Effect.succeed(r)))
+						.catch(() => {});
+				}),
+			(storageRuntime) => Effect.promise(() => storageRuntime.dispose()),
+		);
+
+		yield* SubscriptionRef.set(statusRef, nextStatus);
+
+		return nextStatus;
 	});
 }
 
@@ -77,25 +92,35 @@ export function deleteBucket(
 	id: string,
 	credentials: SupabaseCredentials,
 	runtimeFactory: AppRuntimeFactory,
-	status: Signal<DeleteBucketStatus>,
-	onSuccess: () => void,
-): void {
-	status.value = "pending";
-	const runtime = runtimeFactory(credentials);
+	statusRef: SubscriptionRef.SubscriptionRef<DeleteBucketStatus>,
+): Effect.Effect<DeleteBucketStatus> {
+	return Effect.gen(function* () {
+		yield* SubscriptionRef.set(statusRef, "pending");
 
-	const program = Effect.gen(function* () {
-		const storage = yield* SupabaseStorageService;
-		yield* storage.deleteBucket(id);
-	}).pipe(
-		Effect.match({
-			onSuccess: () => "success" as const,
-			onFailure: () => "error" as const,
-		}),
-	);
+		const program = Effect.gen(function* () {
+			const storage = yield* SupabaseStorageService;
+			yield* storage.deleteBucket(id);
+		}).pipe(
+			Effect.match({
+				onSuccess: () => "success" as const,
+				onFailure: () => "error" as const,
+			}),
+		);
 
-	runtime.runPromise(program).then((nextStatus) => {
-		status.value = nextStatus;
-		void runtime.dispose();
-		if (nextStatus === "success") onSuccess();
+		const nextStatus = yield* Effect.acquireUseRelease(
+			Effect.sync(() => runtimeFactory(credentials)),
+			(storageRuntime) =>
+				Effect.async<DeleteBucketStatus, never>((resume, signal) => {
+					storageRuntime
+						.runPromise(program, { signal })
+						.then((r) => resume(Effect.succeed(r)))
+						.catch(() => {});
+				}),
+			(storageRuntime) => Effect.promise(() => storageRuntime.dispose()),
+		);
+
+		yield* SubscriptionRef.set(statusRef, nextStatus);
+
+		return nextStatus;
 	});
 }

@@ -1,0 +1,12 @@
+{
+	"nodeModulesDir": "auto",
+	"imports": {
+		"effect": "npm:effect@3.19.19",
+		"postgres": "npm:postgres@3.4.8",
+		"supabase": "npm:@supabase/supabase-js@2.98.0",
+		"vitest": "npm:vitest@4.0.18"
+	},
+	"tasks": {
+		"test": "vitest"
+	}
+}

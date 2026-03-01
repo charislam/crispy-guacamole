@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -109,7 +109,7 @@ describe("HomePage integration", () => {
 		// Open the confirmation dialog
 		await user.click(screen.getByRole("button", { name: "Delete bucket" }));
 
-		// Confirm deletion — after dialog opens, the trigger is aria-hidden so only the action button is accessible
+		// Confirm deletion
 		await user.click(screen.getByRole("button", { name: "Delete" }));
 
 		await waitFor(() => expect(deleteBucketSpy).toHaveBeenCalledOnce());

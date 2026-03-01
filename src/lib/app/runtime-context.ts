@@ -1,4 +1,3 @@
-import { createContext, useContext } from "react";
 import type { ManagedRuntime } from "effect";
 
 import { makeAppRuntime } from "./runtime.js";
@@ -9,6 +8,4 @@ export type AppRuntimeFactory = (
 	credentials: SupabaseCredentials,
 ) => ManagedRuntime.ManagedRuntime<SupabaseStorageService, never>;
 
-export const RuntimeContext = createContext<AppRuntimeFactory>(makeAppRuntime);
-
-export const useRuntimeFactory = () => useContext(RuntimeContext);
+export { makeAppRuntime };

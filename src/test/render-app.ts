@@ -1,17 +1,11 @@
-import { RouterProvider, createMemoryHistory } from "@tanstack/react-router";
-import { render } from "@testing-library/react";
 import { Effect, type Layer } from "effect";
 
-import { createAppRouter } from "@/app/router.js";
-import {
-	RuntimeContext,
-	type AppRuntimeFactory,
-} from "@/lib/app/runtime-context.js";
+import { mountApp } from "@/app/main.js";
 import { makeRuntimeFromLayer } from "@/lib/app/runtime.js";
-import { CredentialsStoreContext } from "@/lib/credentials/credentials-store.js";
 import { makeCredentialsStore } from "@/lib/credentials/store.js";
 import type { SupabaseStorageService } from "@/lib/storage/service.js";
 import { defaultTestStorageLayer } from "@/lib/storage/service.mock-layers.js";
+import { makeMemoryHistory } from "@/app/router.js";
 
 type RenderAppOptions = {
 	initialPath?: string;
@@ -34,18 +28,20 @@ export async function renderApp({
 		);
 	}
 
-	const runtimeFactory: AppRuntimeFactory = (_credentials) =>
+	const runtimeFactory = (_credentials: unknown) =>
 		makeRuntimeFromLayer(storageLayer);
 
-	const history = createMemoryHistory({ initialEntries: [initialPath] });
-	const router = createAppRouter({ context: { credentialsStore }, history });
-	await router.load();
+	const container = document.createElement("div");
+	document.body.appendChild(container);
 
-	return render(
-		<CredentialsStoreContext.Provider value={credentialsStore}>
-			<RuntimeContext.Provider value={runtimeFactory}>
-				<RouterProvider router={router} />
-			</RuntimeContext.Provider>
-		</CredentialsStoreContext.Provider>,
-	);
+	const history = makeMemoryHistory(initialPath);
+	const cleanup = mountApp(container, { credentialsStore, runtimeFactory, history });
+
+	return {
+		container,
+		cleanup: () => {
+			cleanup();
+			container.remove();
+		},
+	};
 }

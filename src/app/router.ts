@@ -9,6 +9,19 @@ export type RouteContext = {
 	runtimeFactory: AppRuntimeFactory;
 };
 
+export type Layout = {
+	mount: (
+		container: Element,
+		ctx: RouteContext,
+	) => Effect.Effect<
+		{
+			outlet: Element;
+		},
+		never,
+		Scope.Scope | NavigationService
+	>;
+};
+
 export type Route = {
 	path: string;
 	redirect?: (ctx: RouteContext) => string | null;
@@ -69,17 +82,38 @@ function subscribePopState(
 export function mountRouter({
 	container,
 	routes,
+	layout,
 	ctx,
 	history,
 }: {
 	container: Element;
 	routes: Route[];
+	layout?: Layout;
 	ctx: RouteContext;
 	history: HistoryLike;
 }): Effect.Effect<void, never, Scope.Scope> {
 	return Effect.gen(function* () {
 		let currentFiber: Fiber.RuntimeFiber<void, never> | null = null;
 		const navQueue = yield* Queue.unbounded<string>();
+
+		const nav: NavigationService = {
+			navigate: (p) =>
+				Effect.gen(function* () {
+					history.pushState(null, "", p);
+					yield* Queue.offer(navQueue, p);
+				}),
+		};
+
+		const outlet = yield* Effect.gen(function* () {
+			if (layout) {
+				const { outlet } = yield* layout
+					.mount(container, ctx)
+					.pipe(Effect.provideService(Navigation, nav));
+				return outlet;
+			} else {
+				return container;
+			}
+		});
 
 		const renderPath = (path: string): Effect.Effect<void> =>
 			Effect.gen(function* () {
@@ -97,18 +131,9 @@ export function mountRouter({
 					yield* Fiber.interrupt(currentFiber);
 					currentFiber = null;
 				}
-				container.innerHTML = "";
-
-				const nav: NavigationService = {
-					navigate: (p) =>
-						Effect.gen(function* () {
-							history.pushState(null, "", p);
-							yield* Queue.offer(navQueue, p);
-						}),
-				};
 
 				const pageEffect = route
-					.mount(container, ctx)
+					.mount(outlet, ctx)
 					.pipe(Effect.provideService(Navigation, nav), Effect.scoped);
 
 				currentFiber = Effect.runFork(pageEffect);

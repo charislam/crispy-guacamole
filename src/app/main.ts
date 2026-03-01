@@ -13,6 +13,7 @@ import {
 } from "./router.js";
 
 import "@/app/index.css";
+import { AppLayout } from "./layout.js";
 
 export function mountApp(
 	container: Element,
@@ -25,7 +26,14 @@ export function mountApp(
 	const { credentialsStore, runtimeFactory, history = browserHistory } = opts;
 	const ctx: RouteContext = { credentialsStore, runtimeFactory };
 	const routes = [homeRoute, storageRoute, credentialsRoute];
-	return mountRouter({ container, routes, ctx, history });
+	const layout = AppLayout;
+	return mountRouter({
+		container,
+		routes,
+		layout,
+		ctx,
+		history,
+	});
 }
 
 // Browser bootstrap — only runs when the #root element exists (not in tests)

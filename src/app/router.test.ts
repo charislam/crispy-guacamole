@@ -5,6 +5,7 @@ import { Navigation } from "@/app/navigation.js";
 import {
 	makeMemoryHistory,
 	mountRouter,
+	type Layout,
 	type Route,
 	type RouteContext,
 } from "@/app/router.js";
@@ -41,6 +42,7 @@ function makeContainer() {
 // Forks the router into the current scope so it is interrupted on scope close.
 function startRouter(opts: {
 	routes: Route[];
+	layout?: Layout;
 	history: ReturnType<typeof makeMemoryHistory>;
 	container: Element;
 }) {
@@ -266,5 +268,200 @@ describe("mountRouter", () => {
 				expect(container.innerHTML).toBe("/b");
 			}),
 		),
+	);
+
+	it.effect("layout wraps route content and persists across navigation", () =>
+		Effect.scoped(
+			Effect.gen(function* () {
+				const container = makeContainer();
+				const history = makeMemoryHistory("/a");
+
+				let layoutMounts = 0;
+
+				const layout = {
+					mount: (container: Element) =>
+						Effect.gen(function* () {
+							layoutMounts++;
+
+							const wrapper = document.createElement("div");
+							wrapper.setAttribute("data-layout", "true");
+
+							const nav = document.createElement("nav");
+							nav.textContent = "NAV";
+
+							const outlet = document.createElement("main");
+
+							wrapper.appendChild(nav);
+							wrapper.appendChild(outlet);
+							container.appendChild(wrapper);
+
+							return { outlet };
+						}),
+				};
+
+				yield* startRouter({
+					container,
+					history,
+					routes: [makeRoute("/a"), makeRoute("/b")],
+					layout,
+				});
+
+				yield* waitUntil(() => container.innerHTML.includes("/a"));
+
+				expect(container.querySelector("nav")?.textContent).toBe("NAV");
+				expect(container.innerHTML.includes("/a")).toBe(true);
+				expect(layoutMounts).toBe(1);
+
+				history.pushState(null, "", "/b");
+				window.dispatchEvent(new PopStateEvent("popstate"));
+
+				yield* waitUntil(() => container.innerHTML.includes("/b"));
+
+				// layout still present
+				expect(container.querySelector("nav")?.textContent).toBe("NAV");
+				expect(layoutMounts).toBe(1);
+			}),
+		),
+	);
+
+	it.effect("navigating clears only outlet, not layout", () =>
+		Effect.scoped(
+			Effect.gen(function* () {
+				const container = makeContainer();
+				const history = makeMemoryHistory("/a");
+
+				const layout = {
+					mount: (container: Element) =>
+						Effect.gen(function* () {
+							const wrapper = document.createElement("div");
+
+							const nav = document.createElement("nav");
+							nav.textContent = "NAV";
+
+							const outlet = document.createElement("main");
+
+							wrapper.appendChild(nav);
+							wrapper.appendChild(outlet);
+							container.appendChild(wrapper);
+
+							return { outlet };
+						}),
+				};
+
+				yield* startRouter({
+					container,
+					history,
+					routes: [makeRoute("/a"), makeRoute("/b")],
+					layout,
+				});
+
+				yield* waitUntil(() => container.innerHTML.includes("/a"));
+
+				const navNode = container.querySelector("nav");
+
+				history.pushState(null, "", "/b");
+				window.dispatchEvent(new PopStateEvent("popstate"));
+
+				yield* waitUntil(() => container.innerHTML.includes("/b"));
+
+				// same nav node instance
+				expect(container.querySelector("nav")).toBe(navNode);
+			}),
+		),
+	);
+
+	it.effect("layout can use Navigation service", () =>
+		Effect.scoped(
+			Effect.gen(function* () {
+				const container = makeContainer();
+				const history = makeMemoryHistory("/a");
+
+				const layout = {
+					mount: (container: Element) =>
+						Effect.gen(function* () {
+							const navService = yield* Navigation;
+
+							const wrapper = document.createElement("div");
+							const button = document.createElement("button");
+							button.textContent = "Go B";
+
+							button.onclick = () => {
+								Effect.runFork(navService.navigate("/b"));
+							};
+
+							const outlet = document.createElement("main");
+
+							wrapper.appendChild(button);
+							wrapper.appendChild(outlet);
+							container.appendChild(wrapper);
+
+							return { outlet };
+						}),
+				};
+
+				yield* startRouter({
+					container,
+					history,
+					routes: [makeRoute("/a"), makeRoute("/b")],
+					layout,
+				});
+
+				yield* waitUntil(() => container.innerHTML.includes("/a"));
+
+				(container.querySelector("button") as HTMLButtonElement).click();
+
+				yield* waitUntil(() => container.innerHTML.includes("/b"));
+				expect(history.pathname).toBe("/b");
+			}),
+		),
+	);
+
+	it.effect("closing router scope cleans up layout", () =>
+		Effect.gen(function* () {
+			const container = makeContainer();
+			const history = makeMemoryHistory("/a");
+
+			let cleaned = false;
+
+			const layout = {
+				mount: (container: Element) =>
+					Effect.gen(function* () {
+						yield* Effect.addFinalizer(() =>
+							Effect.sync(() => {
+								cleaned = true;
+							}),
+						);
+
+						const outlet = document.createElement("main");
+						container.appendChild(outlet);
+
+						return { outlet };
+					}),
+			};
+
+			const scope = yield* Scope.make();
+
+			yield* Effect.provideService(
+				Effect.forkScoped(
+					Effect.scoped(
+						mountRouter({
+							container,
+							history,
+							routes: [makeRoute("/a")],
+							ctx: mockCtx,
+							layout,
+						}),
+					),
+				),
+				Scope.Scope,
+				scope,
+			);
+
+			yield* Effect.yieldNow();
+			expect(cleaned).toBe(false);
+
+			yield* Scope.close(scope, Exit.succeed(undefined));
+			expect(cleaned).toBe(true);
+		}),
 	);
 });

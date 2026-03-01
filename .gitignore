@@ -3,3 +3,7 @@ node_modules/
 
 # Secrets
 .env.keys
+
+# Generated
+.DS_Store
+__screenshots__/

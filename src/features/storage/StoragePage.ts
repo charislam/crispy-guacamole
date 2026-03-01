@@ -1,24 +1,27 @@
-import { Effect, Runtime, Scope, Stream, SubscriptionRef } from "effect";
+import { Effect, Runtime, Scope, SubscriptionRef } from "effect";
 
 import { Navigation, type NavigationService } from "@/app/navigation.js";
 import type { RouteContext } from "@/app/router.js";
 import type { KnownCredentialsState } from "@/lib/credentials/types.js";
-import { buildHomePageView } from "./HomePageView.js";
-import type { BucketsState } from "@/features/storage/storageState.js";
-import * as storageState from "@/features/storage/storageState.js";
+import { mountBucketsList } from "./BucketsList.js";
+import { mountBucketCreation } from "./BucketCreation.js";
+import { makeDeleteBucketHandler } from "./BucketDeletion.js";
+import { buildStoragePageView } from "./StoragePageView.js";
+import type { BucketsState } from "./storageState.js";
+import * as storageState from "./storageState.js";
 
-export const homeRoute = {
-	path: "/",
+export const storageRoute = {
+	path: "/storage",
 	redirect: (ctx: RouteContext) => {
 		if (ctx.credentialsStore.getSnapshot().status === "unknown")
 			return "/credentials";
 		return null;
 	},
 	mount: (container: Element, ctx: RouteContext) =>
-		mountHomePage(container, ctx),
+		mountStoragePage(container, ctx),
 };
 
-function mountHomePage(
+function mountStoragePage(
 	container: Element,
 	ctx: RouteContext,
 ): Effect.Effect<void, never, Scope.Scope | NavigationService> {
@@ -41,10 +44,10 @@ function mountHomePage(
 			bucketsStateRef,
 		);
 
-		const { credentialsBtn, viewStorageBtn, countEl } =
+		const { credentialsBtn, bucketActionsSlot, formContainer, listContainer } =
 			yield* Effect.acquireRelease(
 				Effect.sync(() => {
-					const view = buildHomePageView();
+					const view = buildStoragePageView();
 					container.appendChild(view.outer);
 					return view;
 				}),
@@ -55,24 +58,21 @@ function mountHomePage(
 			Runtime.runFork(escapedRuntime)(nav.navigate("/credentials"));
 		});
 
-		viewStorageBtn.addEventListener("click", () => {
-			Runtime.runFork(escapedRuntime)(nav.navigate("/storage"));
-		});
-
-		yield* bucketsStateRef.changes.pipe(
-			Stream.runForEach((state) =>
-				Effect.sync(() => {
-					if (state.status === "loading") {
-						countEl.textContent = "—";
-					} else if (state.status === "error") {
-						countEl.textContent = "Error";
-					} else {
-						countEl.textContent = String(state.data.length);
-					}
-				}),
-			),
-			Effect.forkScoped,
+		yield* mountBucketCreation(
+			bucketActionsSlot,
+			formContainer,
+			credentials,
+			ctx.runtimeFactory,
+			refreshBuckets,
 		);
+
+		const onDeleteBucket = yield* makeDeleteBucketHandler(
+			credentials,
+			ctx.runtimeFactory,
+			refreshBuckets,
+		);
+
+		yield* mountBucketsList(listContainer, bucketsStateRef, onDeleteBucket);
 
 		yield* Effect.forkScoped(refreshBuckets);
 

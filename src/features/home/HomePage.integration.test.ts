@@ -1,10 +1,7 @@
 import { screen, waitFor } from "@testing-library/dom";
-import userEvent from "@testing-library/user-event";
-import { Data } from "effect";
 import { describe, expect, it } from "vitest";
 
 import {
-	makeStatefulStorageLayer,
 	makeStorageLayerNeverResolves,
 	makeStorageLayerWithBuckets,
 	makeStorageLayerWithError,
@@ -17,7 +14,17 @@ describe("HomePage integration", () => {
 		expect(screen.getByText("Connect to Supabase")).toBeInTheDocument();
 	});
 
-	it("shows bucket list from mock service", async () => {
+	it("shows loading state initially", async () => {
+		await renderApp({
+			initialPath: "/",
+			storageLayer: makeStorageLayerNeverResolves(),
+			initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
+		});
+		const countEl = screen.getByText("—");
+		expect(countEl).toBeInTheDocument();
+	});
+
+	it("shows bucket count when loaded", async () => {
 		await renderApp({
 			initialPath: "/",
 			storageLayer: makeStorageLayerWithBuckets([
@@ -29,11 +36,27 @@ describe("HomePage integration", () => {
 					updated_at: "2024-01-01T00:00:00Z",
 					owner: "",
 				},
+				{
+					id: "bucket-2",
+					name: "other-bucket",
+					public: false,
+					created_at: "2024-01-01T00:00:00Z",
+					updated_at: "2024-01-01T00:00:00Z",
+					owner: "",
+				},
+				{
+					id: "bucket-3",
+					name: "third-bucket",
+					public: false,
+					created_at: "2024-01-01T00:00:00Z",
+					updated_at: "2024-01-01T00:00:00Z",
+					owner: "",
+				},
 			]),
 			initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
 		});
 		await waitFor(() =>
-			expect(screen.getByText("my-bucket")).toBeInTheDocument(),
+			expect(screen.getByText("3")).toBeInTheDocument(),
 		);
 	});
 
@@ -44,158 +67,7 @@ describe("HomePage integration", () => {
 			initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
 		});
 		await waitFor(() =>
-			expect(
-				screen.getByText(
-					"Failed to load buckets. Check your credentials and try again.",
-				),
-			).toBeInTheDocument(),
+			expect(screen.getByText("Error")).toBeInTheDocument(),
 		);
-	});
-
-	it("shows loading state initially", async () => {
-		await renderApp({
-			initialPath: "/",
-			storageLayer: makeStorageLayerNeverResolves(),
-			initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
-		});
-		expect(screen.getByText("Loading buckets...")).toBeInTheDocument();
-	});
-
-	it("delete button is present for each bucket", async () => {
-		await renderApp({
-			initialPath: "/",
-			storageLayer: makeStorageLayerWithBuckets([
-				{
-					id: "bucket-1",
-					name: "my-bucket",
-					public: false,
-					created_at: "2024-01-01T00:00:00Z",
-					updated_at: "2024-01-01T00:00:00Z",
-					owner: "",
-				},
-			]),
-			initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
-		});
-		await waitFor(() =>
-			expect(screen.getByText("my-bucket")).toBeInTheDocument(),
-		);
-		expect(
-			screen.getByRole("button", { name: "Delete bucket" }),
-		).toBeInTheDocument();
-	});
-
-	it("clicking delete and confirming calls deleteBucket and removes bucket from list", async () => {
-		const user = userEvent.setup();
-		const { layer, deleteBucketSpy } = makeStatefulStorageLayer([
-			Data.struct({
-				id: "bucket-1",
-				name: "my-bucket",
-				public: false,
-				created_at: "2024-01-01T00:00:00Z",
-				updated_at: "2024-01-01T00:00:00Z",
-				owner: "",
-			}),
-		]);
-
-		await renderApp({
-			initialPath: "/",
-			storageLayer: layer,
-			initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
-		});
-
-		await waitFor(() =>
-			expect(screen.getByText("my-bucket")).toBeInTheDocument(),
-		);
-
-		// Open the confirmation dialog
-		await user.click(screen.getByRole("button", { name: "Delete bucket" }));
-
-		// Confirm deletion
-		await user.click(screen.getByRole("button", { name: "Delete" }));
-
-		await waitFor(() => expect(deleteBucketSpy).toHaveBeenCalledOnce());
-		expect(deleteBucketSpy).toHaveBeenCalledWith("bucket-1");
-
-		await waitFor(() =>
-			expect(screen.queryByText("my-bucket")).not.toBeInTheDocument(),
-		);
-	});
-
-	it("clicking delete then cancel does not call deleteBucket", async () => {
-		const user = userEvent.setup();
-		const { layer, deleteBucketSpy } = makeStatefulStorageLayer([
-			Data.struct({
-				id: "bucket-1",
-				name: "my-bucket",
-				public: false,
-				created_at: "2024-01-01T00:00:00Z",
-				updated_at: "2024-01-01T00:00:00Z",
-				owner: "",
-			}),
-		]);
-
-		await renderApp({
-			initialPath: "/",
-			storageLayer: layer,
-			initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
-		});
-
-		await waitFor(() =>
-			expect(screen.getByText("my-bucket")).toBeInTheDocument(),
-		);
-
-		// Open the confirmation dialog
-		await user.click(screen.getByRole("button", { name: "Delete bucket" }));
-
-		// Cancel
-		await user.click(screen.getByRole("button", { name: "Cancel" }));
-
-		expect(deleteBucketSpy).not.toHaveBeenCalled();
-		expect(screen.queryByText("my-bucket")).toBeInTheDocument();
-	});
-
-	it("creates a bucket, spies on the request, and shows it after refresh", async () => {
-		const user = userEvent.setup();
-		const { layer, createBucketSpy } = makeStatefulStorageLayer([
-			Data.struct({
-				id: "existing",
-				name: "existing-bucket",
-				public: false,
-				created_at: "2024-01-01T00:00:00Z",
-				updated_at: "2024-01-01T00:00:00Z",
-				owner: "",
-			}),
-		]);
-
-		await renderApp({
-			initialPath: "/",
-			storageLayer: layer,
-			initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
-		});
-
-		// Initial list
-		await waitFor(() =>
-			expect(screen.getByText("existing-bucket")).toBeInTheDocument(),
-		);
-
-		// Open form, fill in name, submit
-		await user.click(screen.getByRole("button", { name: "Add bucket" }));
-		await user.type(screen.getByLabelText("Bucket name"), "new-bucket");
-		await user.click(screen.getByRole("button", { name: "Create" }));
-
-		// Spy confirms the service was called correctly
-		await waitFor(() => expect(createBucketSpy).toHaveBeenCalledOnce());
-		expect(createBucketSpy).toHaveBeenCalledWith("new-bucket");
-
-		// New bucket appears (proves the refresh happened and state was updated)
-		await waitFor(() =>
-			expect(screen.getAllByText("new-bucket").length).toBeGreaterThan(0),
-		);
-
-		// Original bucket still present (list was refreshed, not replaced)
-		expect(screen.getAllByText("existing-bucket").length).toBeGreaterThan(0);
-
-		// Form was hidden after success
-		expect(screen.queryByLabelText("Bucket name")).not.toBeInTheDocument();
 	});
 });

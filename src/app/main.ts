@@ -2,6 +2,7 @@ import { Effect, Scope } from "effect";
 
 import { credentialsRoute } from "@/features/credentials/CredentialsPage.js";
 import { homeRoute } from "@/features/home/HomePage.js";
+import { storageRoute } from "@/features/storage/StoragePage.js";
 import { makeAppRuntime } from "@/lib/app/runtime.js";
 import { makeCredentialsStore } from "@/lib/credentials/store.js";
 import {
@@ -23,7 +24,7 @@ export function mountApp(
 ): Effect.Effect<void, never, Scope.Scope> {
 	const { credentialsStore, runtimeFactory, history = browserHistory } = opts;
 	const ctx: RouteContext = { credentialsStore, runtimeFactory };
-	const routes = [homeRoute, credentialsRoute];
+	const routes = [homeRoute, storageRoute, credentialsRoute];
 	return mountRouter({ container, routes, ctx, history });
 }
 

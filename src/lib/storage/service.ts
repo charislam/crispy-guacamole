@@ -42,7 +42,10 @@ export class SupabaseStorageService extends Context.Tag(
 	{
 		listBuckets: (
 			options?: ListBucketsOptions,
-		) => Effect.Effect<readonly Bucket[], StorageRequestError | StorageSchemaError>;
+		) => Effect.Effect<
+			readonly Bucket[],
+			StorageRequestError | StorageSchemaError
+		>;
 		createBucket: (name: string) => Effect.Effect<void, StorageRequestError>;
 		deleteBucket: (id: string) => Effect.Effect<void, StorageRequestError>;
 	}
@@ -95,7 +98,8 @@ export const SupabaseStorageServiceLive = Layer.effect(
 		const { url, key } = yield* SupabaseCredentialsService;
 		const client = createClient(url, Redacted.value(key));
 		return {
-			listBuckets: (options?: ListBucketsOptions) => listBuckets(client, options),
+			listBuckets: (options?: ListBucketsOptions) =>
+				listBuckets(client, options),
 			createBucket: (name) => createBucket(client, name),
 			deleteBucket: (id) => deleteBucket(client, id),
 		};

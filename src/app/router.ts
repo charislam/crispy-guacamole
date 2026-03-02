@@ -8,11 +8,14 @@ import {
 	type NavigationEventsStream,
 	type NavigationService,
 } from "./navigation.js";
+import { buildRouteTrie, matchRoute } from "./trie.js";
 
 export type RouteContext = {
 	credentialsStore: CredentialsStore;
 	runtimeFactory: AppRuntimeFactory;
 };
+
+export type RouteParams = Record<string, string>;
 
 export type Layout = {
 	mount: (
@@ -29,12 +32,33 @@ export type Layout = {
 
 export type Route = {
 	path: string;
-	redirect?: (ctx: RouteContext) => string | null;
+	redirect?: (ctx: RouteContext, params: RouteParams) => string | null;
 	mount: (
 		container: Element,
 		ctx: RouteContext,
+		params: RouteParams,
 	) => Effect.Effect<void, never, Scope.Scope | NavigationService>;
 };
+
+export function matchPath(pattern: string, path: string): RouteParams | null {
+	const patternSegs = pattern.split("/").filter(Boolean);
+	const pathSegs = path.split("/").filter(Boolean);
+	const params: RouteParams = {};
+
+	for (let i = 0; i < patternSegs.length; i++) {
+		const ps = patternSegs[i];
+		if (ps === "*") return params;
+		if (i >= pathSegs.length) return null;
+		if (ps.startsWith(":")) {
+			params[ps.slice(1)] = pathSegs[i];
+		} else if (ps !== pathSegs[i]) {
+			return null;
+		}
+	}
+
+	if (patternSegs.length !== pathSegs.length) return null;
+	return params;
+}
 
 export type HistoryLike = {
 	readonly pathname: string;
@@ -101,6 +125,7 @@ export function mountRouter({
 		let currentFiber: Fiber.RuntimeFiber<void, never> | null = null;
 		const navQueue = yield* Queue.unbounded<string>();
 		const navEventsRef = yield* SubscriptionRef.make(history.pathname);
+		const trie = buildRouteTrie(routes);
 
 		const nav: NavigationService = {
 			navigate: (p) =>
@@ -126,10 +151,11 @@ export function mountRouter({
 
 		const renderPath = (path: string): Effect.Effect<void> =>
 			Effect.gen(function* () {
-				const route = routes.find((r) => r.path === path);
+				const route = matchRoute(trie, path);
 				if (!route) return;
 
-				const redirect = route.redirect?.(ctx) ?? null;
+				const params = matchPath(route.path, path) ?? {};
+				const redirect = route.redirect?.(ctx, params) ?? null;
 				if (redirect !== null) {
 					history.replaceState(null, "", redirect);
 					yield* renderPath(redirect);
@@ -144,7 +170,7 @@ export function mountRouter({
 				yield* SubscriptionRef.set(navEventsRef, path);
 
 				const pageEffect = route
-					.mount(outlet, ctx)
+					.mount(outlet, ctx, params)
 					.pipe(Effect.provideService(Navigation, nav), Effect.scoped);
 
 				currentFiber = Effect.runFork(pageEffect);

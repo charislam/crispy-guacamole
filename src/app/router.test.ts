@@ -4,6 +4,7 @@ import { Effect, Exit, Scope } from "effect";
 import { Navigation } from "@/app/navigation.js";
 import {
 	makeMemoryHistory,
+	matchPath,
 	mountRouter,
 	type Layout,
 	type Route,
@@ -415,6 +416,169 @@ describe("mountRouter", () => {
 			}),
 		),
 	);
+
+	describe("parameterized and wildcard routes", () => {
+		it.effect(":param captures segment", () =>
+			Effect.scoped(
+				Effect.gen(function* () {
+					const container = makeContainer();
+					const history = makeMemoryHistory("/users/42");
+					let capturedId: string | undefined;
+					const routes: Route[] = [
+						{
+							path: "/users/:id",
+							mount: (container, _ctx, params) =>
+								Effect.gen(function* () {
+									capturedId = params.id;
+									container.innerHTML = params.id;
+									yield* Effect.never;
+								}),
+						},
+					];
+					yield* startRouter({ container, history, routes });
+
+					yield* waitUntil(() => capturedId !== undefined);
+					expect(capturedId).toBe("42");
+				}),
+			),
+		);
+
+		it.effect("nested param route", () =>
+			Effect.scoped(
+				Effect.gen(function* () {
+					const container = makeContainer();
+					const history = makeMemoryHistory("/storage/bucket/my-bucket");
+					let capturedId: string | undefined;
+					const routes: Route[] = [
+						{
+							path: "/storage/bucket/:id",
+							mount: (_container, _ctx, params) =>
+								Effect.gen(function* () {
+									capturedId = params.id;
+									yield* Effect.never;
+								}),
+						},
+					];
+					yield* startRouter({ container, history, routes });
+
+					yield* waitUntil(() => capturedId !== undefined);
+					expect(capturedId).toBe("my-bucket");
+				}),
+			),
+		);
+
+		it.effect("multiple params", () =>
+			Effect.scoped(
+				Effect.gen(function* () {
+					const container = makeContainer();
+					const history = makeMemoryHistory("/a/hello/b/world");
+					let capturedParams: Record<string, string> | undefined;
+					const routes: Route[] = [
+						{
+							path: "/a/:x/b/:y",
+							mount: (_container, _ctx, params) =>
+								Effect.gen(function* () {
+									capturedParams = params;
+									yield* Effect.never;
+								}),
+						},
+					];
+					yield* startRouter({ container, history, routes });
+
+					yield* waitUntil(() => capturedParams !== undefined);
+					expect(capturedParams).toEqual({ x: "hello", y: "world" });
+				}),
+			),
+		);
+
+		it.effect("wildcard matches multiple segments", () =>
+			Effect.scoped(
+				Effect.gen(function* () {
+					const container = makeContainer();
+					const history = makeMemoryHistory("/storage/a/b/c");
+					let mounted = false;
+					const wildcardRoute: Route = {
+						path: "/storage/*",
+						mount: (_container, _ctx, _params) =>
+							Effect.gen(function* () {
+								mounted = true;
+								yield* Effect.never;
+							}),
+					};
+					yield* startRouter({ container, history, routes: [wildcardRoute] });
+
+					yield* waitUntil(() => mounted);
+					expect(mounted).toBe(true);
+				}),
+			),
+		);
+
+		it.effect("literal beats param when both match", () =>
+			Effect.scoped(
+				Effect.gen(function* () {
+					const container = makeContainer();
+					const history = makeMemoryHistory("/users/new");
+					let mountedPath: string | undefined;
+					const routes: Route[] = [
+						{
+							path: "/users/:id",
+							mount: (container) =>
+								Effect.gen(function* () {
+									mountedPath = "param";
+									container.innerHTML = "param";
+									yield* Effect.never;
+								}),
+						},
+						{
+							path: "/users/new",
+							mount: (container) =>
+								Effect.gen(function* () {
+									mountedPath = "literal";
+									container.innerHTML = "literal";
+									yield* Effect.never;
+								}),
+						},
+					];
+					yield* startRouter({ container, history, routes });
+
+					yield* waitUntil(() => mountedPath !== undefined);
+					expect(mountedPath).toBe("literal");
+				}),
+			),
+		);
+
+		it("no match on extra segments", () => {
+			expect(matchPath("/a/:b", "/a/b/extra")).toBeNull();
+		});
+
+		it.effect("redirect receives params", () =>
+			Effect.scoped(
+				Effect.gen(function* () {
+					const container = makeContainer();
+					const history = makeMemoryHistory("/old/42");
+					const routes: Route[] = [
+						{
+							path: "/old/:id",
+							redirect: (_ctx, params) => `/new/${params.id}`,
+							mount: () => Effect.void,
+						},
+						{
+							path: "/new/:id",
+							mount: (container, _ctx, params) =>
+								Effect.gen(function* () {
+									container.innerHTML = params.id;
+									yield* Effect.never;
+								}),
+						},
+					];
+					yield* startRouter({ container, history, routes });
+
+					yield* waitUntil(() => history.pathname === "/new/42");
+					expect(history.pathname).toBe("/new/42");
+				}),
+			),
+		);
+	});
 
 	it.effect("closing router scope cleans up layout", () =>
 		Effect.gen(function* () {

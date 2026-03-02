@@ -1,6 +1,9 @@
 import type { Redacted } from "effect";
 
-export type SupabaseCredentials = { url: string; key: Redacted.Redacted<string> };
+export type SupabaseCredentials = {
+	url: string;
+	key: Redacted.Redacted<string>;
+};
 
 type BaseCredentialsState = {
 	status: "unknown" | "known";

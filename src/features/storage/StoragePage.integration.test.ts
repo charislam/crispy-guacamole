@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/dom";
+import { screen, waitFor, within } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
 import { Data } from "effect";
 import { describe, expect, it } from "vitest";
@@ -79,9 +79,7 @@ describe("StoragePage integration", () => {
 		await waitFor(() =>
 			expect(screen.getByText("my-bucket")).toBeInTheDocument(),
 		);
-		expect(
-			screen.getByRole("button", { name: "Delete bucket" }),
-		).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
 	});
 
 	it("clicking delete and confirming calls deleteBucket and removes bucket from list", async () => {
@@ -108,10 +106,11 @@ describe("StoragePage integration", () => {
 		);
 
 		// Open the confirmation dialog
-		await user.click(screen.getByRole("button", { name: "Delete bucket" }));
+		await user.click(screen.getByRole("button", { name: "Delete" }));
 
 		// Confirm deletion
-		await user.click(screen.getByRole("button", { name: "Delete" }));
+		const dialog = screen.getByRole("dialog");
+		await user.click(within(dialog).getByRole("button", { name: "Delete" }));
 
 		await waitFor(() => expect(deleteBucketSpy).toHaveBeenCalledOnce());
 		expect(deleteBucketSpy).toHaveBeenCalledWith("bucket-1");
@@ -145,7 +144,7 @@ describe("StoragePage integration", () => {
 		);
 
 		// Open the confirmation dialog
-		await user.click(screen.getByRole("button", { name: "Delete bucket" }));
+		await user.click(screen.getByRole("button", { name: "Delete" }));
 
 		// Cancel
 		await user.click(screen.getByRole("button", { name: "Cancel" }));

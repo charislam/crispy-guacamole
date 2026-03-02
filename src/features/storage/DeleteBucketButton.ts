@@ -10,7 +10,7 @@ export function mountDeleteBucketButton(
 	const btn = el(
 		"button",
 		{ class: "h-8 px-3 rounded-md border text-sm" },
-		"Delete bucket",
+		"Delete",
 	);
 	container.appendChild(btn);
 

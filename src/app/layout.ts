@@ -1,5 +1,6 @@
 import { Effect, Stream } from "effect";
 
+import { buildNavView } from "@/features/navigation/NavigationView.js";
 import { el } from "@/lib/dom.js";
 import { cn } from "@/lib/utils.js";
 import { Navigation, NavigationEvents } from "./navigation.js";
@@ -16,31 +17,22 @@ export const AppLayout: Layout = {
 			const navigation = yield* Navigation;
 			const navEventsRef = yield* NavigationEvents;
 
-			const linkEls = navLinks.map((link) => {
-				const navLink = el(
-					"a",
-					{
-						href: link.path,
-						class: cn(
-							"text-sm font-medium transition-colors hover:text-foreground",
-						),
-					},
-					link.label,
-				);
+			const { nav, navLinks } = buildNavView();
 
-				navLink.addEventListener("click", (e) => {
+			navLinks.forEach((link) => {
+				link.addEventListener("click", (e) => {
 					e.preventDefault();
-					Effect.runFork(navigation.navigate(link.path));
+					Effect.runFork(navigation.navigate(link.getAttribute("href")!));
 				});
 
-				return navLink;
+				return link;
 			});
 
 			const updateActiveLinks = (currentPath: string) => {
-				navLinks.forEach((link, i) => {
-					linkEls[i].className = cn(
+				navLinks.forEach((link) => {
+					link.className = cn(
 						"text-sm font-medium transition-colors hover:text-foreground",
-						currentPath === link.path
+						currentPath === link.getAttribute("href")
 							? "text-foreground"
 							: "text-muted-foreground",
 					);
@@ -50,33 +42,6 @@ export const AppLayout: Layout = {
 			yield* navEventsRef.changes.pipe(
 				Stream.runForEach((path) => Effect.sync(() => updateActiveLinks(path))),
 				Effect.forkScoped,
-			);
-
-			const nav = el(
-				"nav",
-				{
-					class: "border-b border-border bg-background flex-0",
-				},
-				el(
-					"div",
-					{
-						class: "container mx-auto flex h-14 items-center gap-6 px-4",
-					},
-					el(
-						"div",
-						{
-							class: "flex items-center gap-2",
-						},
-						el(
-							"span",
-							{
-								class: "text-lg font-semibold text-foreground",
-							},
-							"App",
-						),
-					),
-					...linkEls,
-				),
 			);
 
 			const outlet = el("div", {

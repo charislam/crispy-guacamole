@@ -1,15 +1,14 @@
 import { Effect, Stream } from "effect";
 
-import { buildNavView } from "@/features/navigation/NavigationView.js";
+import {
+	buildNavView,
+	desktopLinkBase,
+	mobileLinkBase,
+} from "@/features/navigation/NavigationView.js";
 import { el } from "@/lib/dom.js";
 import { cn } from "@/lib/utils.js";
 import { Navigation, NavigationEvents } from "./navigation.js";
 import type { Layout } from "./router";
-
-const navLinks = [
-	{ path: "/", label: "Home" },
-	{ path: "/storage", label: "Storage" },
-];
 
 export const AppLayout: Layout = {
 	mount: (container) =>
@@ -17,23 +16,25 @@ export const AppLayout: Layout = {
 			const navigation = yield* Navigation;
 			const navEventsRef = yield* NavigationEvents;
 
-			const { nav, navLinks } = buildNavView();
+			const navigate = (path: string) =>
+				Effect.runFork(navigation.navigate(path));
 
-			navLinks.forEach((link) => {
-				link.addEventListener("click", (e) => {
-					e.preventDefault();
-					Effect.runFork(navigation.navigate(link.getAttribute("href")!));
-				});
-
-				return link;
-			});
+			const { nav, navLinks, mobileLinkEls } = buildNavView(navigate);
 
 			const updateActiveLinks = (currentPath: string) => {
 				navLinks.forEach((link) => {
 					link.className = cn(
-						"text-sm font-medium transition-colors hover:text-foreground",
+						desktopLinkBase,
 						currentPath === link.getAttribute("href")
 							? "text-foreground"
+							: "text-muted-foreground",
+					);
+				});
+				mobileLinkEls.forEach((link) => {
+					link.className = cn(
+						mobileLinkBase,
+						currentPath === link.getAttribute("href")
+							? "bg-accent text-accent-foreground"
 							: "text-muted-foreground",
 					);
 				});

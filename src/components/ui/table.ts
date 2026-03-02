@@ -16,11 +16,7 @@ export function TableHead(columns: string[]): HTMLTableSectionElement {
 }
 
 export function TableHeaderCell(text: string): HTMLTableCellElement {
-	return el(
-		"th",
-		{ class: "text-left font-medium py-2 px-4 border-b" },
-		text,
-	);
+	return el("th", { class: "text-left font-medium py-2 px-4 border-b" }, text);
 }
 
 export function TableBody(): HTMLTableSectionElement {

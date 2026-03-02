@@ -77,7 +77,11 @@ function mountAddBucketForm(
 		() => Effect.sync(() => bucketActionsSlot.replaceChildren(addBucketBtn)),
 	).pipe(
 		Effect.andThen(
-			mountCreateBucketForm(formContainer, onCreateBucket, createBucketStatusRef),
+			mountCreateBucketForm(
+				formContainer,
+				onCreateBucket,
+				createBucketStatusRef,
+			),
 		),
 	);
 }

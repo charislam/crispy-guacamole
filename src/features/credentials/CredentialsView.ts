@@ -40,7 +40,7 @@ export function buildCredentialsView(): CredentialsViewElements {
 
 	const wrapper = el(
 		"div",
-		{ class: "flex items-center justify-center min-h-screen p-4" },
+		{ class: "flex-1 flex items-center justify-center p-4" },
 		Card([
 			CardHeader(
 				"Connect to Supabase",

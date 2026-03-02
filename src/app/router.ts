@@ -1,8 +1,13 @@
-import { Effect, Fiber, Queue, Scope } from "effect";
+import { Effect, Fiber, Queue, Scope, SubscriptionRef } from "effect";
 
 import type { AppRuntimeFactory } from "@/lib/app/runtime.js";
 import type { CredentialsStore } from "@/lib/credentials/store.js";
-import { Navigation, type NavigationService } from "./navigation.js";
+import {
+	Navigation,
+	NavigationEvents,
+	type NavigationEventsStream,
+	type NavigationService,
+} from "./navigation.js";
 
 export type RouteContext = {
 	credentialsStore: CredentialsStore;
@@ -18,7 +23,7 @@ export type Layout = {
 			outlet: Element;
 		},
 		never,
-		Scope.Scope | NavigationService
+		Scope.Scope | NavigationService | NavigationEventsStream
 	>;
 };
 
@@ -95,6 +100,7 @@ export function mountRouter({
 	return Effect.gen(function* () {
 		let currentFiber: Fiber.RuntimeFiber<void, never> | null = null;
 		const navQueue = yield* Queue.unbounded<string>();
+		const navEventsRef = yield* SubscriptionRef.make(history.pathname);
 
 		const nav: NavigationService = {
 			navigate: (p) =>
@@ -108,7 +114,10 @@ export function mountRouter({
 			if (layout) {
 				const { outlet } = yield* layout
 					.mount(container, ctx)
-					.pipe(Effect.provideService(Navigation, nav));
+					.pipe(
+						Effect.provideService(Navigation, nav),
+						Effect.provideService(NavigationEvents, navEventsRef),
+					);
 				return outlet;
 			} else {
 				return container;
@@ -131,6 +140,8 @@ export function mountRouter({
 					yield* Fiber.interrupt(currentFiber);
 					currentFiber = null;
 				}
+
+				yield* SubscriptionRef.set(navEventsRef, path);
 
 				const pageEffect = route
 					.mount(outlet, ctx)

@@ -19,17 +19,28 @@ export function buildHomePageView(): HomePageViewElements {
 		credentialsBtn,
 	);
 
-	const countEl = el("p", { class: "text-4xl font-bold tabular-nums text-center my-4" }, "—");
-	const label = el("p", { class: "text-sm text-muted-foreground text-center" }, "buckets total");
+	const countEl = el(
+		"p",
+		{ class: "text-4xl font-bold tabular-nums text-center my-4" },
+		"—",
+	);
+	const label = el(
+		"p",
+		{ class: "text-sm text-muted-foreground text-center" },
+		"buckets total",
+	);
 
 	const viewStorageBtn = Button("View Storage →");
 
-	const card = Card([
-		CardHeader("Storage Buckets", "Your Supabase storage buckets"),
-		countEl,
-		label,
-		el("div", { class: "flex justify-center mt-4" }, viewStorageBtn),
-	], "max-w-full");
+	const card = Card(
+		[
+			CardHeader("Storage Buckets", "Your Supabase storage buckets"),
+			countEl,
+			label,
+			el("div", { class: "flex justify-center mt-4" }, viewStorageBtn),
+		],
+		"max-w-full",
+	);
 
 	const outer = el(
 		"div",

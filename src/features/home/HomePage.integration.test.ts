@@ -55,9 +55,7 @@ describe("HomePage integration", () => {
 			]),
 			initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
 		});
-		await waitFor(() =>
-			expect(screen.getByText("3")).toBeInTheDocument(),
-		);
+		await waitFor(() => expect(screen.getByText("3")).toBeInTheDocument());
 	});
 
 	it("shows error state when service fails", async () => {
@@ -66,8 +64,6 @@ describe("HomePage integration", () => {
 			storageLayer: makeStorageLayerWithError("Network error"),
 			initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
 		});
-		await waitFor(() =>
-			expect(screen.getByText("Error")).toBeInTheDocument(),
-		);
+		await waitFor(() => expect(screen.getByText("Error")).toBeInTheDocument());
 	});
 });

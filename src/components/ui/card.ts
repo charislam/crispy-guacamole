@@ -1,7 +1,10 @@
 import { el } from "@/lib/dom.js";
 import { cn } from "@/lib/utils.js";
 
-export function Card(children: (Node | string)[], className?: string): HTMLDivElement {
+export function Card(
+	children: (Node | string)[],
+	className?: string,
+): HTMLDivElement {
 	return el(
 		"div",
 		{ class: cn("w-full max-w-md rounded-lg border p-6 shadow-sm", className) },

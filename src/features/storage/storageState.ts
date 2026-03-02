@@ -11,7 +11,7 @@ import {
 
 export type BucketsState =
 	| { status: "loading" }
-	| { status: "ready"; data: Bucket[] }
+	| { status: "ready"; data: readonly Bucket[] }
 	| { status: "error"; error: StorageRequestError | StorageSchemaError };
 
 export type CreateBucketStatus = "idle" | "pending" | "success" | "error";

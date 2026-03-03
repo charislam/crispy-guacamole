@@ -36,7 +36,7 @@ function buildBucketRow(
 	const tr = TableRow();
 	tr.dataset.bucketId = bucket.id;
 
-	const nameTd = TableCell("font-medium");
+	const nameTd = TableCell("font-medium", "Name");
 	const nameBtn = document.createElement("a");
 	nameBtn.href = `/storage/bucket/${bucket.id}`;
 	nameBtn.className = "underline-offset-4 hover:underline";
@@ -46,11 +46,11 @@ function buildBucketRow(
 	});
 	nameTd.appendChild(nameBtn);
 
-	const idTd = TableCell("font-mono text-sm text-muted-foreground");
+	const idTd = TableCell("font-mono text-sm text-muted-foreground", "ID");
 	idTd.textContent = bucket.id;
-	const publicTd = TableCell();
-	const dateTd = TableCell();
-	const actionsTd = TableCell();
+	const publicTd = TableCell(undefined, "Public");
+	const dateTd = TableCell(undefined, "Created");
+	const actionsTd = TableCell(undefined, "Actions");
 
 	tr.append(nameTd, idTd, publicTd, dateTd, actionsTd);
 	return { tr, nameTd, publicTd, dateTd, actionsTd };

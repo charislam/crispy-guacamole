@@ -29,11 +29,23 @@ type RowEntry = {
 
 const COLUMNS = ["Name", "ID", "Public", "Created", "Actions"];
 
-function buildBucketRow(bucket: Bucket): RowEntry {
+function buildBucketRow(
+	bucket: Bucket,
+	onNavigateToBucket: (id: string) => void,
+): RowEntry {
 	const tr = TableRow();
 	tr.dataset.bucketId = bucket.id;
 
 	const nameTd = TableCell("font-medium");
+	const nameBtn = document.createElement("a");
+	nameBtn.href = `/storage/bucket/${bucket.id}`;
+	nameBtn.className = "underline-offset-4 hover:underline";
+	nameBtn.addEventListener("click", (e) => {
+		e.preventDefault();
+		onNavigateToBucket(bucket.id);
+	});
+	nameTd.appendChild(nameBtn);
+
 	const idTd = TableCell("font-mono text-sm text-muted-foreground");
 	idTd.textContent = bucket.id;
 	const publicTd = TableCell();
@@ -51,7 +63,8 @@ function renderBucketRow(
 	prevDeleteCleanup?: () => void,
 ): () => void {
 	prevDeleteCleanup?.();
-	entry.nameTd.textContent = bucket.name;
+	const nameBtn = entry.nameTd.querySelector("a");
+	if (nameBtn) nameBtn.textContent = bucket.name;
 	entry.publicTd.textContent = bucket.public ? "Yes" : "No";
 	entry.dateTd.textContent = new Date(bucket.created_at).toLocaleDateString();
 	return mountDeleteBucketButton(entry.actionsTd, bucket, onDeleteBucket);
@@ -59,6 +72,7 @@ function renderBucketRow(
 
 export function buildBucketsListView(
 	onDeleteBucket: (id: string) => void,
+	onNavigateToBucket: (id: string) => void,
 ): BucketsListView {
 	const loadingEl = el(
 		"p",
@@ -145,7 +159,7 @@ export function buildBucketsListView(
 					),
 				);
 			} else {
-				const entry = buildBucketRow(bucket);
+				const entry = buildBucketRow(bucket, onNavigateToBucket);
 				deleteBtnCleanups.set(
 					bucket.id,
 					renderBucketRow(entry, bucket, onDeleteBucket),

@@ -66,7 +66,15 @@ function mountStoragePage(
 			refreshBuckets,
 		);
 
-		yield* mountBucketsList(listContainer, bucketsStateRef, onDeleteBucket);
+		const onNavigateToBucket = (id: string) =>
+			Effect.runFork(nav.navigate(`/storage/bucket/${id}`));
+
+		yield* mountBucketsList(
+			listContainer,
+			bucketsStateRef,
+			onDeleteBucket,
+			onNavigateToBucket,
+		);
 
 		yield* Effect.forkScoped(refreshBuckets);
 

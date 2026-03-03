@@ -25,6 +25,19 @@ export const BucketSchema = Schema.Data(
 
 export type Bucket = Schema.Schema.Type<typeof BucketSchema>;
 
+export const StorageItemSchema = Schema.Data(
+	Schema.Struct({
+		name: Schema.String,
+		id: Schema.NullOr(Schema.String),
+		updated_at: Schema.NullOr(Schema.String),
+		created_at: Schema.NullOr(Schema.String),
+		last_accessed_at: Schema.NullOr(Schema.String),
+		metadata: Schema.Unknown,
+	}),
+);
+
+export type StorageItem = Schema.Schema.Type<typeof StorageItemSchema>;
+
 export class StorageRequestError extends Data.TaggedError(
 	"StorageRequestError",
 )<{
@@ -51,6 +64,13 @@ export class SupabaseStorageService extends Context.Tag(
 			options: { public: boolean },
 		) => Effect.Effect<void, StorageRequestError>;
 		deleteBucket: (id: string) => Effect.Effect<void, StorageRequestError>;
+		listFiles: (
+			bucketId: string,
+			prefix: string,
+		) => Effect.Effect<
+			readonly StorageItem[],
+			StorageRequestError | StorageSchemaError
+		>;
 	}
 >() {}
 
@@ -99,6 +119,27 @@ const listBuckets = (client: SupabaseClient, options?: ListBucketsOptions) =>
 		),
 	);
 
+const listFiles = (
+	client: SupabaseClient,
+	bucketId: string,
+	prefix: string,
+) =>
+	Effect.tryPromise({
+		try: () => client.storage.from(bucketId).list(prefix),
+		catch: (cause) => new StorageRequestError({ cause }),
+	}).pipe(
+		Effect.flatMap(({ data, error }) =>
+			error !== null
+				? Effect.fail(new StorageRequestError({ cause: error }))
+				: Effect.succeed(data ?? []),
+		),
+		Effect.flatMap((data) =>
+			Schema.decodeUnknown(Schema.Array(StorageItemSchema))(data).pipe(
+				Effect.mapError((cause) => new StorageSchemaError({ cause })),
+			),
+		),
+	);
+
 export const SupabaseStorageServiceLive = Layer.effect(
 	SupabaseStorageService,
 	Effect.gen(function* () {
@@ -109,6 +150,7 @@ export const SupabaseStorageServiceLive = Layer.effect(
 				listBuckets(client, options),
 			createBucket: (name, options) => createBucket(client, name, options),
 			deleteBucket: (id) => deleteBucket(client, id),
+			listFiles: (bucketId, prefix) => listFiles(client, bucketId, prefix),
 		};
 	}),
 );

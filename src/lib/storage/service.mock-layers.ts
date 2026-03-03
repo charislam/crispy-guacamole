@@ -5,12 +5,14 @@ import {
 	StorageRequestError,
 	SupabaseStorageService,
 	type Bucket,
+	type StorageItem,
 } from "@/lib/storage/service.js";
 
 export const defaultTestStorageLayer = Layer.succeed(SupabaseStorageService, {
 	listBuckets: () => Effect.succeed([]),
 	createBucket: () => Effect.void,
 	deleteBucket: () => Effect.void,
+	listFiles: () => Effect.succeed([]),
 });
 
 export const makeStorageLayerWithBuckets = (buckets: Bucket[]) =>
@@ -18,6 +20,7 @@ export const makeStorageLayerWithBuckets = (buckets: Bucket[]) =>
 		listBuckets: () => Effect.succeed(buckets),
 		createBucket: () => Effect.void,
 		deleteBucket: () => Effect.void,
+		listFiles: () => Effect.succeed([]),
 	});
 
 export const makeStorageLayerWithError = (cause: unknown) =>
@@ -25,6 +28,7 @@ export const makeStorageLayerWithError = (cause: unknown) =>
 		listBuckets: () => Effect.fail(new StorageRequestError({ cause })),
 		createBucket: () => Effect.void,
 		deleteBucket: () => Effect.void,
+		listFiles: () => Effect.succeed([]),
 	});
 
 export const makeStorageLayerNeverResolves = () =>
@@ -32,6 +36,7 @@ export const makeStorageLayerNeverResolves = () =>
 		listBuckets: () => Effect.never,
 		createBucket: () => Effect.never,
 		deleteBucket: () => Effect.never,
+		listFiles: () => Effect.never,
 	});
 
 export const makeStatefulStorageLayer = (initialBuckets: Bucket[]) => {
@@ -70,7 +75,25 @@ export const makeStatefulStorageLayer = (initialBuckets: Bucket[]) => {
 		listBuckets: () => Effect.succeed(state.buckets),
 		createBucket: (name, options) => createBucketSpy(name, options),
 		deleteBucket: (id) => deleteBucketSpy(id),
+		listFiles: () => Effect.succeed([]),
 	});
 
 	return { layer, createBucketSpy, deleteBucketSpy };
 };
+
+export const makeStorageLayerWithFiles = (files: StorageItem[]) =>
+	Layer.succeed(SupabaseStorageService, {
+		listBuckets: () => Effect.succeed([]),
+		createBucket: () => Effect.void,
+		deleteBucket: () => Effect.void,
+		listFiles: () => Effect.succeed(files),
+	});
+
+export const makeStorageLayerWithFilesError = (cause: unknown) =>
+	Layer.succeed(SupabaseStorageService, {
+		listBuckets: () => Effect.succeed([]),
+		createBucket: () => Effect.void,
+		deleteBucket: () => Effect.void,
+		listFiles: () => Effect.fail(new StorageRequestError({ cause })),
+	});
+

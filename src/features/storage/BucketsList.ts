@@ -7,11 +7,12 @@ export function mountBucketsList(
 	container: Element,
 	bucketsStateRef: SubscriptionRef.SubscriptionRef<BucketsState>,
 	onDeleteBucket: (id: string) => void,
+	onNavigateToBucket: (id: string) => void,
 ): Effect.Effect<void, never, Scope.Scope> {
 	return Effect.gen(function* () {
 		const view = yield* Effect.acquireRelease(
 			Effect.sync(() => {
-				const view = buildBucketsListView(onDeleteBucket);
+				const view = buildBucketsListView(onDeleteBucket, onNavigateToBucket);
 				container.appendChild(view.wrapper);
 				return view;
 			}),

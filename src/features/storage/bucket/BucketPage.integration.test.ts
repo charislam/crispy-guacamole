@@ -121,7 +121,7 @@ describe("BucketPage integration", () => {
 			expect(screen.getByText("images")).toBeInTheDocument(),
 		);
 		// Collapsed chevron is visible
-		expect(screen.getByText("▶")).toBeInTheDocument();
+		expect(document.querySelector('[data-state="collapsed"]')).toBeInTheDocument();
 	});
 
 	it("expanding a folder loads and shows its children", async () => {
@@ -153,7 +153,7 @@ describe("BucketPage integration", () => {
 			expect(screen.getByText("photo.jpg")).toBeInTheDocument(),
 		);
 		// Chevron changes to expanded state
-		expect(screen.getByText("▼")).toBeInTheDocument();
+		expect(document.querySelector('[data-state="expanded"]')).toBeInTheDocument();
 	});
 
 	it("collapsing an expanded folder hides its children", async () => {
@@ -191,7 +191,7 @@ describe("BucketPage integration", () => {
 			expect(screen.queryByText("photo.jpg")).not.toBeInTheDocument(),
 		);
 		// Chevron returns to collapsed state
-		expect(screen.getByText("▶")).toBeInTheDocument();
+		expect(document.querySelector('[data-state="collapsed"]')).toBeInTheDocument();
 	});
 
 	it("listFiles is called with the correct bucket ID and folder prefix", async () => {
@@ -315,7 +315,7 @@ describe("BucketPage integration", () => {
 		await waitFor(() =>
 			expect(screen.getByText("photo.jpg")).toBeInTheDocument(),
 		);
-		expect(screen.getByText("▼")).toBeInTheDocument();
+		expect(document.querySelector('[data-state="expanded"]')).toBeInTheDocument();
 	});
 
 	it("navigates to bucket page when clicking a bucket name on /storage", async () => {

@@ -44,7 +44,7 @@ function mountStoragePage(
 			bucketsStateRef,
 		);
 
-		const { credentialsBtn, bucketActionsSlot, formContainer, listContainer } =
+		const { credentialsBtn, bucketActionsSlot, listContainer } =
 			yield* Effect.acquireRelease(
 				Effect.sync(() => {
 					const view = buildStoragePageView();
@@ -60,7 +60,6 @@ function mountStoragePage(
 
 		yield* mountBucketCreation(
 			bucketActionsSlot,
-			formContainer,
 			credentials,
 			ctx.runtimeFactory,
 			refreshBuckets,

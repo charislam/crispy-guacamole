@@ -6,7 +6,9 @@ import { el } from "@/lib/dom.js";
 export type CreateBucketFormViewElements = {
 	form: HTMLFormElement;
 	input: HTMLInputElement;
+	publicCheckbox: HTMLInputElement;
 	submitBtn: HTMLButtonElement;
+	cancelBtn: HTMLButtonElement;
 };
 
 export function buildCreateBucketFormView(): CreateBucketFormViewElements {
@@ -16,14 +18,33 @@ export function buildCreateBucketFormView(): CreateBucketFormViewElements {
 		placeholder: "my-bucket",
 		className: "w-full",
 	});
+
+	const publicCheckbox = el("input", {
+		type: "checkbox",
+		id: "bucket-public",
+		name: "bucket-public",
+		class: "h-4 w-4 rounded border",
+	});
+
+	const cancelBtn = Button("Cancel", { variant: "outline" });
 	const submitBtn = Button("Create", { type: "submit" });
 
 	const form = el(
 		"form",
-		{ class: "mb-6 flex gap-2 items-end" },
+		{ class: "space-y-4" },
 		FormField("Bucket name", input),
-		submitBtn,
+		el(
+			"div",
+			{ class: "flex items-center gap-2" },
+			publicCheckbox,
+			el(
+				"label",
+				{ for: "bucket-public", class: "text-sm font-medium cursor-pointer" },
+				"Public bucket",
+			),
+		),
+		el("div", { class: "flex justify-end gap-2 mt-4" }, cancelBtn, submitBtn),
 	);
 
-	return { form, input, submitBtn };
+	return { form, input, publicCheckbox, submitBtn, cancelBtn };
 }

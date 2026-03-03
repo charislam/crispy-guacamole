@@ -53,6 +53,7 @@ export function loadBuckets(
 
 export function createBucket(
 	name: string,
+	isPublic: boolean,
 	credentials: SupabaseCredentials,
 	runtimeFactory: AppRuntimeFactory,
 	statusRef: SubscriptionRef.SubscriptionRef<CreateBucketStatus>,
@@ -62,7 +63,7 @@ export function createBucket(
 
 		const program = Effect.gen(function* () {
 			const storage = yield* SupabaseStorageService;
-			yield* storage.createBucket(name);
+			yield* storage.createBucket(name, { public: isPublic });
 		}).pipe(
 			Effect.match({
 				onSuccess: () => "success" as const,

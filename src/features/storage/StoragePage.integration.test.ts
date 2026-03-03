@@ -184,7 +184,7 @@ describe("StoragePage integration", () => {
 
 		// Spy confirms the service was called correctly
 		await waitFor(() => expect(createBucketSpy).toHaveBeenCalledOnce());
-		expect(createBucketSpy).toHaveBeenCalledWith("new-bucket");
+		expect(createBucketSpy).toHaveBeenCalledWith("new-bucket", { public: false });
 
 		// New bucket appears (proves the refresh happened and state was updated)
 		await waitFor(() =>
@@ -196,5 +196,47 @@ describe("StoragePage integration", () => {
 
 		// Form was hidden after success
 		expect(screen.queryByLabelText("Bucket name")).not.toBeInTheDocument();
+	});
+
+	it("cancelling bucket creation closes the modal without creating a bucket", async () => {
+		const user = userEvent.setup();
+		const { layer, createBucketSpy } = makeStatefulStorageLayer([]);
+
+		await renderApp({
+			initialPath: "/storage",
+			storageLayer: layer,
+			initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
+		});
+
+		// Open modal, type a name, then cancel
+		await user.click(screen.getByRole("button", { name: "Add bucket" }));
+		expect(screen.getByLabelText("Bucket name")).toBeInTheDocument();
+		await user.type(screen.getByLabelText("Bucket name"), "cancelled-bucket");
+		await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+		// Modal is closed
+		expect(screen.queryByLabelText("Bucket name")).not.toBeInTheDocument();
+
+		// Service was never called
+		expect(createBucketSpy).not.toHaveBeenCalled();
+	});
+
+	it("creates a public bucket when the public checkbox is checked", async () => {
+		const user = userEvent.setup();
+		const { layer, createBucketSpy } = makeStatefulStorageLayer([]);
+
+		await renderApp({
+			initialPath: "/storage",
+			storageLayer: layer,
+			initialCredentials: { url: "https://test.supabase.co", key: "test-key" },
+		});
+
+		await user.click(screen.getByRole("button", { name: "Add bucket" }));
+		await user.type(screen.getByLabelText("Bucket name"), "public-bucket");
+		await user.click(screen.getByLabelText("Public bucket"));
+		await user.click(screen.getByRole("button", { name: "Create" }));
+
+		await waitFor(() => expect(createBucketSpy).toHaveBeenCalledOnce());
+		expect(createBucketSpy).toHaveBeenCalledWith("public-bucket", { public: true });
 	});
 });

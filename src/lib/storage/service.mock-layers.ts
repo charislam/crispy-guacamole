@@ -39,13 +39,14 @@ export const makeStatefulStorageLayer = (initialBuckets: Bucket[]) => {
 
 	const createBucketImpl = (
 		name: string,
+		options: { public: boolean },
 	): Effect.Effect<void, StorageRequestError> => {
 		state.buckets = [
 			...state.buckets,
 			Data.struct({
 				id: name,
 				name,
-				public: false,
+				public: options.public,
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString(),
 				owner: "",
@@ -67,7 +68,7 @@ export const makeStatefulStorageLayer = (initialBuckets: Bucket[]) => {
 
 	const layer = Layer.succeed(SupabaseStorageService, {
 		listBuckets: () => Effect.succeed(state.buckets),
-		createBucket: (name) => createBucketSpy(name),
+		createBucket: (name, options) => createBucketSpy(name, options),
 		deleteBucket: (id) => deleteBucketSpy(id),
 	});
 

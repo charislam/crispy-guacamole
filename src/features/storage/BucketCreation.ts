@@ -1,7 +1,8 @@
-import { Effect, Scope, SubscriptionRef } from "effect";
+import { Effect, Scope, Stream, SubscriptionRef } from "effect";
 
 import type { RouteContext } from "@/app/router.js";
 import { Button } from "@/components/ui/button.js";
+import { el } from "@/lib/dom.js";
 import type { KnownCredentialsState } from "@/lib/credentials/types.js";
 import { makePanel } from "@/lib/panel.js";
 import { mountCreateBucketForm } from "./CreateBucketForm.js";
@@ -10,7 +11,6 @@ import * as storageState from "./storageState.js";
 
 export function mountBucketCreation(
 	bucketActionsSlot: Element,
-	formContainer: Element,
 	credentials: KnownCredentialsState["credentials"],
 	runtimeFactory: RouteContext["runtimeFactory"],
 	refreshBuckets: Effect.Effect<void>,
@@ -18,23 +18,26 @@ export function mountBucketCreation(
 	return Effect.acquireRelease(
 		Effect.sync(() => {
 			const addBucketBtn = Button("Add bucket");
-			const cancelBtn = Button("Cancel", { variant: "outline" });
 			bucketActionsSlot.appendChild(addBucketBtn);
-			return { addBucketBtn, cancelBtn };
+			return { addBucketBtn };
 		}),
 		({ addBucketBtn }) => Effect.sync(() => addBucketBtn.remove()),
 	).pipe(
-		Effect.andThen(({ addBucketBtn, cancelBtn }) =>
+		Effect.andThen(({ addBucketBtn }) =>
 			Effect.gen(function* () {
 				const createBucketStatusRef =
 					yield* SubscriptionRef.make<CreateBucketStatus>("idle");
 
 				const panel = yield* makePanel();
 
-				const onCreateBucket = (name: string): Effect.Effect<void> =>
+				const onCreateBucket = (
+					name: string,
+					isPublic: boolean,
+				): Effect.Effect<void> =>
 					Effect.gen(function* () {
 						const status = yield* storageState.createBucket(
 							name,
+							isPublic,
 							credentials,
 							runtimeFactory,
 							createBucketStatusRef,
@@ -47,41 +50,50 @@ export function mountBucketCreation(
 
 				addBucketBtn.addEventListener("click", () =>
 					panel.show(
-						mountAddBucketForm(
-							formContainer,
-							bucketActionsSlot,
-							addBucketBtn,
-							cancelBtn,
+						mountAddBucketModal(
 							onCreateBucket,
 							createBucketStatusRef,
+							panel.hide,
 						),
 					),
 				);
-
-				cancelBtn.addEventListener("click", panel.hide);
 			}),
 		),
 	);
 }
 
-function mountAddBucketForm(
-	formContainer: Element,
-	bucketActionsSlot: Element,
-	addBucketBtn: Element,
-	cancelBtn: Element,
-	onCreateBucket: (name: string) => Effect.Effect<void>,
-	createBucketStatusRef: SubscriptionRef.SubscriptionRef<CreateBucketStatus>,
+function mountAddBucketModal(
+	onCreateBucket: (name: string, isPublic: boolean) => Effect.Effect<void>,
+	statusRef: SubscriptionRef.SubscriptionRef<CreateBucketStatus>,
+	onCancel: () => void,
 ): Effect.Effect<void, never, Scope.Scope> {
-	return Effect.acquireRelease(
-		Effect.sync(() => bucketActionsSlot.replaceChildren(cancelBtn)),
-		() => Effect.sync(() => bucketActionsSlot.replaceChildren(addBucketBtn)),
-	).pipe(
-		Effect.andThen(
-			mountCreateBucketForm(
-				formContainer,
-				onCreateBucket,
-				createBucketStatusRef,
-			),
-		),
-	);
+	return Effect.gen(function* () {
+		const controller = new AbortController();
+
+		const { formSlot } = yield* Effect.acquireRelease(
+			Effect.sync(() => {
+				const formSlot = el("div", {});
+
+				const dialog = document.createElement("dialog");
+				dialog.className =
+					"rounded-lg p-6 shadow-xl max-w-md w-full m-auto";
+				dialog.append(
+					el("h2", { class: "text-lg font-semibold mb-4" }, "Add bucket"),
+					formSlot,
+				);
+				document.body.appendChild(dialog);
+				dialog.showModal();
+
+				return { formSlot, dialog };
+			}),
+			({ dialog }) =>
+				Effect.sync(() => {
+					controller.abort();
+					dialog.close();
+					dialog.remove();
+				}),
+		);
+
+		yield* mountCreateBucketForm(formSlot, onCreateBucket, statusRef, onCancel);
+	});
 }

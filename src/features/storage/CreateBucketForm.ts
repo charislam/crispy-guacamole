@@ -5,13 +5,14 @@ import type { CreateBucketStatus } from "./storageState.js";
 
 export function mountCreateBucketForm(
 	container: Element,
-	onSubmit: (name: string) => Effect.Effect<void>,
+	onSubmit: (name: string, isPublic: boolean) => Effect.Effect<void>,
 	statusRef: SubscriptionRef.SubscriptionRef<CreateBucketStatus>,
+	onCancel: () => void,
 ): Effect.Effect<void, never, Scope.Scope> {
 	return Effect.gen(function* () {
 		const controller = new AbortController();
 
-		const { form, submitBtn } = yield* Effect.acquireRelease(
+		const { form, submitBtn, cancelBtn } = yield* Effect.acquireRelease(
 			Effect.sync(() => {
 				const view = buildCreateBucketFormView();
 				container.appendChild(view.form);
@@ -24,10 +25,16 @@ export function mountCreateBucketForm(
 				}),
 		);
 
+		cancelBtn.addEventListener("click", onCancel, {
+			signal: controller.signal,
+		});
+
 		const handleSubmit = (e: Event) => {
 			e.preventDefault();
-			const name = new FormData(form).get("bucket-name") as string;
-			Effect.runFork(onSubmit(name));
+			const data = new FormData(form);
+			const name = data.get("bucket-name") as string;
+			const isPublic = data.get("bucket-public") === "on";
+			Effect.runFork(onSubmit(name, isPublic));
 		};
 		form.addEventListener("submit", handleSubmit, {
 			signal: controller.signal,

@@ -5,7 +5,6 @@ export type StoragePageViewElements = {
 	outer: HTMLDivElement;
 	credentialsBtn: HTMLButtonElement;
 	bucketActionsSlot: HTMLDivElement;
-	formContainer: HTMLDivElement;
 	listContainer: HTMLDivElement;
 };
 
@@ -20,14 +19,12 @@ export function buildStoragePageView(): StoragePageViewElements {
 		el("div", { class: "flex gap-2" }, credentialsBtn, bucketActionsSlot),
 	);
 
-	const formContainer = el("div", {});
 	const listContainer = el("div", {});
 
 	const outer = el(
 		"div",
 		{ class: "container mx-auto py-10 px-4 max-w-3xl" },
 		header,
-		formContainer,
 		listContainer,
 	);
 
@@ -35,7 +32,6 @@ export function buildStoragePageView(): StoragePageViewElements {
 		outer,
 		credentialsBtn,
 		bucketActionsSlot,
-		formContainer,
 		listContainer,
 	};
 }

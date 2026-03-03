@@ -34,7 +34,8 @@ function buildMobileNavView(navigate: (path: string) => void): MobileNavView {
 	const hamburgerBtn = el("button", {
 		type: "button",
 		"aria-label": "Toggle menu",
-		class: "md:hidden inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors",
+		class:
+			"md:hidden inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors",
 	});
 	hamburgerBtn.innerHTML = menuIconSvg;
 
@@ -109,7 +110,9 @@ export function buildNavView(navigate: (path: string) => void): NavView {
 		{ class: "border-b border-border bg-background flex-0" },
 		el(
 			"div",
-			{ class: "container mx-auto flex h-14 items-center justify-between px-4" },
+			{
+				class: "container mx-auto flex h-14 items-center justify-between px-4",
+			},
 			el(
 				"div",
 				{ class: "flex items-center gap-6" },

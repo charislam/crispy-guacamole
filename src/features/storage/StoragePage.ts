@@ -1,11 +1,11 @@
-import { Effect, Runtime, Scope, SubscriptionRef } from "effect";
+import { Effect, Scope, SubscriptionRef } from "effect";
 
 import { Navigation, type NavigationService } from "@/app/navigation.js";
 import type { RouteContext } from "@/app/router.js";
 import type { KnownCredentialsState } from "@/lib/credentials/types.js";
-import { mountBucketsList } from "./BucketsList.js";
 import { mountBucketCreation } from "./BucketCreation.js";
 import { makeDeleteBucketHandler } from "./BucketDeletion.js";
+import { mountBucketsList } from "./BucketsList.js";
 import { buildStoragePageView } from "./StoragePageView.js";
 import type { BucketsState } from "./storageState.js";
 import * as storageState from "./storageState.js";
@@ -44,19 +44,14 @@ function mountStoragePage(
 			bucketsStateRef,
 		);
 
-		const { credentialsBtn, bucketActionsSlot, listContainer } =
-			yield* Effect.acquireRelease(
-				Effect.sync(() => {
-					const view = buildStoragePageView();
-					container.appendChild(view.outer);
-					return view;
-				}),
-				({ outer }) => Effect.sync(() => outer.remove()),
-			);
-
-		credentialsBtn.addEventListener("click", () => {
-			Runtime.runFork(escapedRuntime)(nav.navigate("/credentials"));
-		});
+		const { bucketActionsSlot, listContainer } = yield* Effect.acquireRelease(
+			Effect.sync(() => {
+				const view = buildStoragePageView();
+				container.appendChild(view.outer);
+				return view;
+			}),
+			({ outer }) => Effect.sync(() => outer.remove()),
+		);
 
 		yield* mountBucketCreation(
 			bucketActionsSlot,

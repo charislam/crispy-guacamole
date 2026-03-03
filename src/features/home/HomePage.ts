@@ -2,10 +2,10 @@ import { Effect, Runtime, Scope, Stream, SubscriptionRef } from "effect";
 
 import { Navigation, type NavigationService } from "@/app/navigation.js";
 import type { RouteContext } from "@/app/router.js";
-import type { KnownCredentialsState } from "@/lib/credentials/types.js";
-import { buildHomePageView } from "./HomePageView.js";
 import type { BucketsState } from "@/features/storage/storageState.js";
 import * as storageState from "@/features/storage/storageState.js";
+import type { KnownCredentialsState } from "@/lib/credentials/types.js";
+import { buildHomePageView } from "./HomePageView.js";
 
 export const homeRoute = {
 	path: "/",
@@ -41,19 +41,14 @@ function mountHomePage(
 			bucketsStateRef,
 		);
 
-		const { credentialsBtn, viewStorageBtn, countEl } =
-			yield* Effect.acquireRelease(
-				Effect.sync(() => {
-					const view = buildHomePageView();
-					container.appendChild(view.outer);
-					return view;
-				}),
-				({ outer }) => Effect.sync(() => outer.remove()),
-			);
-
-		credentialsBtn.addEventListener("click", () => {
-			Runtime.runFork(escapedRuntime)(nav.navigate("/credentials"));
-		});
+		const { viewStorageBtn, countEl } = yield* Effect.acquireRelease(
+			Effect.sync(() => {
+				const view = buildHomePageView();
+				container.appendChild(view.outer);
+				return view;
+			}),
+			({ outer }) => Effect.sync(() => outer.remove()),
+		);
 
 		viewStorageBtn.addEventListener("click", () => {
 			Runtime.runFork(escapedRuntime)(nav.navigate("/storage"));

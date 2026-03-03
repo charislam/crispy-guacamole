@@ -4,19 +4,15 @@ import { el } from "@/lib/dom.js";
 
 export type HomePageViewElements = {
 	outer: HTMLDivElement;
-	credentialsBtn: HTMLButtonElement;
 	viewStorageBtn: HTMLButtonElement;
 	countEl: HTMLElement;
 };
 
 export function buildHomePageView(): HomePageViewElements {
-	const credentialsBtn = Button("Change credentials", { variant: "outline" });
-
 	const header = el(
 		"div",
 		{ class: "flex items-center justify-between mb-6" },
 		el("h1", { class: "text-2xl font-bold" }, "Dashboard"),
-		credentialsBtn,
 	);
 
 	const countEl = el(
@@ -49,5 +45,5 @@ export function buildHomePageView(): HomePageViewElements {
 		card,
 	);
 
-	return { outer, credentialsBtn, viewStorageBtn, countEl };
+	return { outer, viewStorageBtn, countEl };
 }

@@ -75,8 +75,7 @@ function mountAddBucketModal(
 				const formSlot = el("div", {});
 
 				const dialog = document.createElement("dialog");
-				dialog.className =
-					"rounded-lg p-6 shadow-xl max-w-md w-full m-auto";
+				dialog.className = "rounded-lg p-6 shadow-xl max-w-md w-full m-auto";
 				dialog.append(
 					el("h2", { class: "text-lg font-semibold mb-4" }, "Add bucket"),
 					formSlot,

@@ -184,7 +184,9 @@ describe("StoragePage integration", () => {
 
 		// Spy confirms the service was called correctly
 		await waitFor(() => expect(createBucketSpy).toHaveBeenCalledOnce());
-		expect(createBucketSpy).toHaveBeenCalledWith("new-bucket", { public: false });
+		expect(createBucketSpy).toHaveBeenCalledWith("new-bucket", {
+			public: false,
+		});
 
 		// New bucket appears (proves the refresh happened and state was updated)
 		await waitFor(() =>
@@ -237,6 +239,8 @@ describe("StoragePage integration", () => {
 		await user.click(screen.getByRole("button", { name: "Create" }));
 
 		await waitFor(() => expect(createBucketSpy).toHaveBeenCalledOnce());
-		expect(createBucketSpy).toHaveBeenCalledWith("public-bucket", { public: true });
+		expect(createBucketSpy).toHaveBeenCalledWith("public-bucket", {
+			public: true,
+		});
 	});
 });

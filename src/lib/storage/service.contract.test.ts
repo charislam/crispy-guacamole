@@ -27,33 +27,37 @@ describe("SupabaseStorageService (contract)", () => {
 		}).pipe(Effect.provide(liveLayer)),
 	);
 
-	it.effect("createBucket creates a private bucket and deleteBucket removes it", () =>
-		Effect.gen(function* () {
-			const storage = yield* SupabaseStorageService;
-			const name = `contract-test-private-${Date.now()}`;
-			yield* storage.createBucket(name, { public: false });
-			const bucketsAfterCreate = yield* storage.listBuckets();
-			const bucket = bucketsAfterCreate.find((b) => b.name === name);
-			expect(bucket).toBeDefined();
-			expect(bucket?.public).toBe(false);
-			yield* storage.deleteBucket(name);
-			const bucketsAfterDelete = yield* storage.listBuckets();
-			expect(bucketsAfterDelete.some((b) => b.name === name)).toBe(false);
-		}).pipe(Effect.provide(liveLayer)),
+	it.effect(
+		"createBucket creates a private bucket and deleteBucket removes it",
+		() =>
+			Effect.gen(function* () {
+				const storage = yield* SupabaseStorageService;
+				const name = `contract-test-private-${Date.now()}`;
+				yield* storage.createBucket(name, { public: false });
+				const bucketsAfterCreate = yield* storage.listBuckets();
+				const bucket = bucketsAfterCreate.find((b) => b.name === name);
+				expect(bucket).toBeDefined();
+				expect(bucket?.public).toBe(false);
+				yield* storage.deleteBucket(name);
+				const bucketsAfterDelete = yield* storage.listBuckets();
+				expect(bucketsAfterDelete.some((b) => b.name === name)).toBe(false);
+			}).pipe(Effect.provide(liveLayer)),
 	);
 
-	it.effect("createBucket creates a public bucket and deleteBucket removes it", () =>
-		Effect.gen(function* () {
-			const storage = yield* SupabaseStorageService;
-			const name = `contract-test-public-${Date.now()}`;
-			yield* storage.createBucket(name, { public: true });
-			const bucketsAfterCreate = yield* storage.listBuckets();
-			const bucket = bucketsAfterCreate.find((b) => b.name === name);
-			expect(bucket).toBeDefined();
-			expect(bucket?.public).toBe(true);
-			yield* storage.deleteBucket(name);
-			const bucketsAfterDelete = yield* storage.listBuckets();
-			expect(bucketsAfterDelete.some((b) => b.name === name)).toBe(false);
-		}).pipe(Effect.provide(liveLayer)),
+	it.effect(
+		"createBucket creates a public bucket and deleteBucket removes it",
+		() =>
+			Effect.gen(function* () {
+				const storage = yield* SupabaseStorageService;
+				const name = `contract-test-public-${Date.now()}`;
+				yield* storage.createBucket(name, { public: true });
+				const bucketsAfterCreate = yield* storage.listBuckets();
+				const bucket = bucketsAfterCreate.find((b) => b.name === name);
+				expect(bucket).toBeDefined();
+				expect(bucket?.public).toBe(true);
+				yield* storage.deleteBucket(name);
+				const bucketsAfterDelete = yield* storage.listBuckets();
+				expect(bucketsAfterDelete.some((b) => b.name === name)).toBe(false);
+			}).pipe(Effect.provide(liveLayer)),
 	);
 });

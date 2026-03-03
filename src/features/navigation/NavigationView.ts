@@ -1,10 +1,11 @@
-import closeIconSvg from "./icons/close.svg?raw";
-import menuIconSvg from "./icons/menu.svg?raw";
 import { el } from "@/lib/dom";
 import { cn } from "@/lib/utils";
+import closeIconSvg from "./icons/close.svg?raw";
+import menuIconSvg from "./icons/menu.svg?raw";
 
 const navLinks = [
 	{ path: "/", label: "Home" },
+	{ path: "/sql", label: "SQL" },
 	{ path: "/storage", label: "Storage" },
 	{ path: "/credentials", label: "Credentials" },
 ];

@@ -14,6 +14,7 @@ import {
 } from "./router.js";
 
 import "@/app/index.css";
+import { sqlRoute } from "@/features/sql/SqlPage.js";
 import { AppLayout } from "./layout.js";
 
 export function mountApp(
@@ -26,7 +27,13 @@ export function mountApp(
 ): Effect.Effect<void, never, Scope.Scope> {
 	const { credentialsStore, runtimeFactory, history = browserHistory } = opts;
 	const ctx: RouteContext = { credentialsStore, runtimeFactory };
-	const routes = [homeRoute, storageRoute, bucketRoute, credentialsRoute];
+	const routes = [
+		homeRoute,
+		storageRoute,
+		bucketRoute,
+		sqlRoute,
+		credentialsRoute,
+	];
 	const layout = AppLayout;
 	return mountRouter({
 		container,
